@@ -10,6 +10,8 @@ local.properties
 .loadpath
 .recommenders
 
+workspace/MetanomeTestRunner/io/
+
 # External tool builders
 .externalToolBuilders/
 
