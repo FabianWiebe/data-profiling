@@ -28,12 +28,12 @@ public class SuperUCC extends SuperUCCAlgorithm 				// Separating the algorithm 
 
 	@Override
 	public String getAuthors() {
-		return "Thorsten Papenbrock"; // A string listing the author(s) of this algorithm
+		return "Arne Mayer, Fabian Wiebe";
 	}
 
 	@Override
 	public String getDescription() {
-		return "An example algorithm with no real functionality"; // A string briefly describing what this algorithm does
+		return "Discovers all unique column combinations";
 	}
 	
 	@Override
@@ -69,25 +69,37 @@ public class SuperUCC extends SuperUCCAlgorithm 				// Separating the algorithm 
 	@Override
 	public void setStringConfigurationValue(String identifier, String... values) throws AlgorithmConfigurationException {
 		if (SuperUCC.Identifier.SOME_STRING_PARAMETER.name().equals(identifier))
-			this.someStringParameter = values[0];
+		{
+			//this.someStringParameter = values[0];
+		}			
 		else
+		{
 			this.handleUnknownConfiguration(identifier, values);
+		}
 	}
 
 	@Override
 	public void setIntegerConfigurationValue(String identifier, Integer... values) throws AlgorithmConfigurationException {
 		if (SuperUCC.Identifier.SOME_INTEGER_PARAMETER.name().equals(identifier))
-			this.someIntegerParameter = values[0];
+		{
+			//this.someIntegerParameter = values[0];
+		}
 		else
+		{
 			this.handleUnknownConfiguration(identifier, values);
+		}		
 	}
 
 	@Override
 	public void setBooleanConfigurationValue(String identifier, Boolean... values) throws AlgorithmConfigurationException {
 		if (SuperUCC.Identifier.SOME_BOOLEAN_PARAMETER.name().equals(identifier))
-			this.someBooleanParameter = values[0];
+		{
+			//this.someBooleanParameter = values[0];
+		}
 		else
+		{
 			this.handleUnknownConfiguration(identifier, values);
+		}	
 	}
 
 	@Override

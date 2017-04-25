@@ -48,8 +48,6 @@ local.properties
 .scala_dependencies
 .worksheet
 
-*/.vs/
-
 *target*
 *.jar
 *.war
