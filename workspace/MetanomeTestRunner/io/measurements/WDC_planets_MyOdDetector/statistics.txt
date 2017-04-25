@@ -1,9 +1,0 @@
-de.metanome.algorithms.myoddetector.MyOdDetector
-
-Config:
-	algorithm: MYODDETECTOR
-	dataset: WDC_planets.csv
-
-Runtime: 5
-
-Results: 1
