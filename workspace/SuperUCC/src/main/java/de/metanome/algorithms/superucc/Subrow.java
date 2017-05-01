@@ -22,7 +22,7 @@ public class Subrow {
 		
 		Subrow rhs = (Subrow) o;
 		
-		if(rhs.values.length != rhs.values.length)
+		if(this.values.length != rhs.values.length)
 			return false;
 		
 		for(int i = 0; i < this.values.length; i++)
