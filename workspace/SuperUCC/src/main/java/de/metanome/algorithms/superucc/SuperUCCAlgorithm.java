@@ -74,11 +74,12 @@ public class SuperUCCAlgorithm {
 			if(this.isUnique(columnIds))
 			{
 				results.add(this.columnsAsUCC(columnIds));
-				for(int j = i; j < combinations.size();)
+				for(int j = i + 1; j < combinations.size();)
 				{
 					if(combinations.get(j).containsSubset(combination))
 					{
 						combinations.remove(j);
+						System.out.println("removing " + j);
 					}
 					else
 					{
