@@ -27,7 +27,8 @@ public class Subrow {
 		
 		for(int i = 0; i < this.values.length; i++)
 		{
-			if(!this.values[i].equals(rhs.values[i]))
+			// null != null
+			if(this.values[i] == null || rhs.values[i] == null || !this.values[i].equals(rhs.values[i]))
 			{
 				return false;
 			}
