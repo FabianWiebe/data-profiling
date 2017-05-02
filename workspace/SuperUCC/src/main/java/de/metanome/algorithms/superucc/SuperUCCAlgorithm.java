@@ -36,51 +36,55 @@ public class SuperUCCAlgorithm {
 		this.initialize();
 		records = this.readInput();
 		this.print(records);
-		List<UniqueColumnCombination> results = new LinkedList<UniqueColumnCombination>();
-		// Example: Generate some results (usually, the algorithm should really calculate them on the data)
-		// List<UniqueColumnCombination> results = this.generateResults();
-		// Example: To test if the algorithm outputs results
-		/////////////////////////////////////////////
 		
-		//ColumnCombinationBitset columnCombination = new ColumnCombinationBitset();
+		
+		List<UniqueColumnCombination> results = new LinkedList<UniqueColumnCombination>();
+		
 		List<ColumnCombinationBitset> combinations = new LinkedList<ColumnCombinationBitset>();
 		for(int columnId = 0; columnId < this.columnNames.size(); columnId++)
 		{
 			combinations.add(new ColumnCombinationBitset(columnId));
 		}
 		HashSet<ColumnCombinationBitset> lastPass = new HashSet<ColumnCombinationBitset>(combinations);
-		HashSet<ColumnCombinationBitset> tmp;
-		// iterate over size of combinations
-		for(int columnId = 0; columnId < this.columnNames.size() - 1; columnId++) {
-			tmp = new HashSet<ColumnCombinationBitset>();
+		HashSet<ColumnCombinationBitset> newCombinations;
+		
+		// Iterate over columns to possibly add for a new combination
+		for(int subsetsize = 0; subsetsize < this.columnNames.size() -1; subsetsize++) {
+			newCombinations = new HashSet<ColumnCombinationBitset>();
 			// iterate over combinations from last pass
 			for (ColumnCombinationBitset combination : lastPass) {
 				for(int j = 0; j < this.columnNames.size(); j++) {
 					if(!combination.containsColumn(j)) {
 						ColumnCombinationBitset tmpCombination = new ColumnCombinationBitset(combination);
 						tmpCombination.addColumn(j);
-						tmp.add(tmpCombination);					
+						newCombinations.add(tmpCombination);					
 					}
 
 				}
 			}
-			lastPass = tmp;
-			combinations.addAll(tmp);
+			lastPass = newCombinations;
+			combinations.addAll(newCombinations);
 		}
 		
 		
-		for(int columnId = 0; columnId < combinations.size(); columnId++)
+		for(int i = 0; i < combinations.size(); i++)
 		{
-			List<Integer> columnIds = combinations.get(columnId).getSetBits();
+			ColumnCombinationBitset combination = combinations.get(i);
+			List<Integer> columnIds = combination.getSetBits();
 			if(this.isUnique(columnIds))
 			{
-				UniqueColumnCombination combination = new UniqueColumnCombination();
-				for (int id : columnIds) {
-					//combination.a(this.getColumnIdentifierForColumnId(id));
+				results.add(this.columnsAsUCC(columnIds));
+				for(int j = i; j < combinations.size();)
+				{
+					if(combinations.get(j).containsSubset(combination))
+					{
+						combinations.remove(j);
+					}
+					else
+					{
+						j++;
+					}
 				}
-				
-				
-				results.add(combination);
 			}
 		}
 		
@@ -117,6 +121,20 @@ public class SuperUCCAlgorithm {
 		}
 		
 		return true;
+	}
+	
+	protected UniqueColumnCombination columnsAsUCC(List<Integer> columnIds)
+	{
+		ColumnIdentifier[] identifiers = new ColumnIdentifier[columnIds.size()];
+		
+		int i = 0;
+		for (int id : columnIds) {
+			identifiers[i] = (this.getColumnIdentifierForColumnId(id));
+			i++;
+		}
+		
+		UniqueColumnCombination combination = new UniqueColumnCombination(identifiers);
+		return combination;
 	}
 	
 	protected List<List<String>> readInput() throws InputGenerationException, AlgorithmConfigurationException, InputIterationException {
