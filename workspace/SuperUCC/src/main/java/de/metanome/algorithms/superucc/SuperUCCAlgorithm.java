@@ -37,13 +37,20 @@ public class SuperUCCAlgorithm {
 		records = this.readInput();
 		this.print(records);
 		
+		HashSet<ColumnCombinationBitset> minKeys = new HashSet<ColumnCombinationBitset>();
 		
 		List<UniqueColumnCombination> results = new LinkedList<UniqueColumnCombination>();
 		
 		List<ColumnCombinationBitset> combinations = new LinkedList<ColumnCombinationBitset>();
 		for(int columnId = 0; columnId < this.columnNames.size(); columnId++)
 		{
-			combinations.add(new ColumnCombinationBitset(columnId));
+			// is it key?v -> do not add lastpass
+			ColumnCombinationBitset combination = new ColumnCombinationBitset(columnId);
+			if (this.isUnique(combination)) {
+				minKeys.add(combination);
+			} else {
+				combinations.add(combination);
+			}
 		}
 		HashSet<ColumnCombinationBitset> lastPass = new HashSet<ColumnCombinationBitset>(combinations);
 		HashSet<ColumnCombinationBitset> newCombinations;
@@ -57,7 +64,14 @@ public class SuperUCCAlgorithm {
 					if(!combination.containsColumn(j)) {
 						ColumnCombinationBitset tmpCombination = new ColumnCombinationBitset(combination);
 						tmpCombination.addColumn(j);
-						newCombinations.add(tmpCombination);					
+						// is it min key? ->
+						if (!minKeys.contains(tmpCombination)) {
+							if (this.isUnique(tmpCombination)) {
+								minKeys.add(tmpCombination);
+							} else {
+								newCombinations.add(tmpCombination);
+							}
+						}	
 					}
 
 				}
@@ -67,26 +81,28 @@ public class SuperUCCAlgorithm {
 		}
 		
 		
-		for(int i = 0; i < combinations.size(); i++)
-		{
-			ColumnCombinationBitset combination = combinations.get(i);
-			List<Integer> columnIds = combination.getSetBits();
-			if(this.isUnique(columnIds))
-			{
-				results.add(this.columnsAsUCC(columnIds));
-				for(int j = i + 1; j < combinations.size();)
-				{
-					if(combinations.get(j).containsSubset(combination))
-					{
-						combinations.remove(j);
-						System.out.println("removing " + j);
-					}
-					else
-					{
-						j++;
-					}
-				}
-			}
+//		for(int i = 0; i < combinations.size(); i++)
+//		{
+//			ColumnCombinationBitset combination = combinations.get(i);
+//			if(this.isUnique(combination))
+//			{
+//				results.add(this.columnsAsUCC(combination));
+//				for(int j = i + 1; j < combinations.size();)
+//				{
+//					if(combinations.get(j).containsSubset(combination))
+//					{
+//						combinations.remove(j);
+//						System.out.println("removing " + j);
+//					}
+//					else
+//					{
+//						j++;
+//					}
+//				}
+//			}
+//		}
+		for (ColumnCombinationBitset combination : minKeys) {
+			results.add(this.columnsAsUCC(combination));
 		}
 		
 		this.emit(results);
@@ -96,6 +112,11 @@ public class SuperUCCAlgorithm {
 		RelationalInput input = this.inputGenerator.generateNewCopy();
 		this.relationName = input.relationName();
 		this.columnNames = input.columnNames();
+	}
+	
+	protected boolean isUnique(ColumnCombinationBitset combination)
+	{
+		return this.isUnique(combination.getSetBits());
 	}
 	
 	protected boolean isUnique(List<Integer> columnIds)
@@ -122,6 +143,11 @@ public class SuperUCCAlgorithm {
 		}
 		
 		return true;
+	}
+	
+	protected UniqueColumnCombination columnsAsUCC(ColumnCombinationBitset combination)
+	{
+		return this.columnsAsUCC(combination.getSetBits());
 	}
 	
 	protected UniqueColumnCombination columnsAsUCC(List<Integer> columnIds)
