@@ -5,7 +5,9 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
+import de.metanome.algorithm_helper.data_structures.ColumnCombinationBitset;
 import de.metanome.algorithm_integration.AlgorithmConfigurationException;
 import de.metanome.algorithm_integration.AlgorithmExecutionException;
 import de.metanome.algorithm_integration.ColumnCombination;
@@ -40,12 +42,44 @@ public class SuperUCCAlgorithm {
 		// Example: To test if the algorithm outputs results
 		/////////////////////////////////////////////
 		
+		//ColumnCombinationBitset columnCombination = new ColumnCombinationBitset();
+		List<ColumnCombinationBitset> combinations = new LinkedList<ColumnCombinationBitset>();
 		for(int columnId = 0; columnId < this.columnNames.size(); columnId++)
 		{
-			String columnName = this.columnNames.get(columnId);
-			UniqueColumnCombination combination = new UniqueColumnCombination(this.getColumnIdentifierForColumnName(columnName));
-			if(this.isUnique(columnId))
+			combinations.add(new ColumnCombinationBitset(columnId));
+		}
+		HashSet<ColumnCombinationBitset> lastPass = new HashSet<ColumnCombinationBitset>(combinations);
+		HashSet<ColumnCombinationBitset> tmp;
+		// iterate over size of combinations
+		for(int columnId = 0; columnId < this.columnNames.size() - 1; columnId++) {
+			tmp = new HashSet<ColumnCombinationBitset>();
+			// iterate over combinations from last pass
+			for (ColumnCombinationBitset combination : lastPass) {
+				for(int j = 0; j < this.columnNames.size(); j++) {
+					if(!combination.containsColumn(j)) {
+						ColumnCombinationBitset tmpCombination = new ColumnCombinationBitset(combination);
+						tmpCombination.addColumn(j);
+						tmp.add(tmpCombination);					
+					}
+
+				}
+			}
+			lastPass = tmp;
+			combinations.addAll(tmp);
+		}
+		
+		
+		for(int columnId = 0; columnId < combinations.size(); columnId++)
+		{
+			List<Integer> columnIds = combinations.get(columnId).getSetBits();
+			if(this.isUnique(columnIds))
 			{
+				UniqueColumnCombination combination = new UniqueColumnCombination();
+				for (int id : columnIds) {
+					//combination.a(this.getColumnIdentifierForColumnId(id));
+				}
+				
+				
 				results.add(combination);
 			}
 		}
@@ -59,16 +93,16 @@ public class SuperUCCAlgorithm {
 		this.columnNames = input.columnNames();
 	}
 	
-	protected boolean isUnique(int... columnIds)
+	protected boolean isUnique(List<Integer> columnIds)
 	{
 		HashSet<Subrow> hashSet = new HashSet<Subrow>();
 		
 		for(List<String> row : records)
 		{
-			String[] values = new String[columnIds.length];
-			for(int i = 0; i < columnIds.length; i++)
+			String[] values = new String[columnIds.size()];
+			for(int i = 0; i < columnIds.size(); i++)
 			{
-				values[i] = row.get(columnIds[i]);
+				values[i] = row.get(columnIds.get(i));
 			}
 			
 			Subrow subrow = new Subrow(values);
@@ -125,6 +159,11 @@ public class SuperUCCAlgorithm {
 	protected ColumnIdentifier getColumnIdentifierForColumnName(String columnName)
 	{
 		return new ColumnIdentifier(this.relationName, columnName);
+	}
+	
+	protected ColumnIdentifier getColumnIdentifierForColumnId(int columnId)
+	{
+		return new ColumnIdentifier(this.relationName, this.columnNames.get(columnId));
 	}
 	
 	protected void emit(List<UniqueColumnCombination> results) throws CouldNotReceiveResultException, ColumnNameMismatchException {
