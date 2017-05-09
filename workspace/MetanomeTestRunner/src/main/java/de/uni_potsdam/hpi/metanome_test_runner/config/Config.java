@@ -69,7 +69,7 @@ public class Config {
 	}
 	
 	public Config() {
-		this(Config.Algorithm.SUPERUCC, Config.Dataset.PLANETS);
+		this(Config.Algorithm.SUPERUCC, Config.Dataset.NCVOTER_1K);
 	}
 
 	public Config(Config.Algorithm algorithm, Config.Dataset dataset) {

@@ -3,23 +3,23 @@ package de.metanome.algorithms.superucc;
 public class Subrow {
 	
 	public String[] values;
-	public boolean hasNull = false;
+//	public boolean hasNull = false;
 	
 	public Subrow(String... vals)
 	{
 		values = vals;
-		for (String val : vals) {
-			if (val == null) {
-				hasNull = true;
-				break;
-			}
-		}
+//		for (String val : vals) {
+//			if (val == null) {
+//				hasNull = true;
+//				break;
+//			}
+//		}
 	}
 	
 	@Override
 	public boolean equals(Object o)
 	{
-		if(this.hasNull || !(o instanceof Subrow))
+		if(!(o instanceof Subrow))
 		{
 			return false;
 		}
@@ -29,13 +29,13 @@ public class Subrow {
 		
 		Subrow rhs = (Subrow) o;
 		
-		if(rhs.hasNull || this.values.length != rhs.values.length)
+		if(this.values.length != rhs.values.length)
 			return false;
 		
 		for(int i = 0; i < this.values.length; i++)
 		{
 			// null != null is checked at creation
-			if(!this.values[i].equals(rhs.values[i]))
+			if(rhs.values[i] == null || this.values[i] == null || !this.values[i].equals(rhs.values[i]))
 			{
 				return false;
 			}

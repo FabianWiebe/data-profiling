@@ -1,6 +1,8 @@
 package de.metanome.algorithms.superucc;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -39,9 +41,8 @@ public class SuperUCCAlgorithm {
 		
 		HashSet<ColumnCombinationBitset> minKeys = new HashSet<ColumnCombinationBitset>();
 		
-		List<UniqueColumnCombination> results = new LinkedList<UniqueColumnCombination>();
-		
-		List<ColumnCombinationBitset> combinations = new LinkedList<ColumnCombinationBitset>();
+//		List<ColumnCombinationBitset> combinations = new LinkedList<ColumnCombinationBitset>();
+		HashSet<ColumnCombinationBitset> lastPass = new HashSet<ColumnCombinationBitset>();
 		for(int columnId = 0; columnId < this.columnNames.size(); columnId++)
 		{
 			// is it key?v -> do not add lastpass
@@ -49,45 +50,70 @@ public class SuperUCCAlgorithm {
 			if (this.isUnique(combination)) {
 				minKeys.add(combination);
 			} else {
-				combinations.add(combination);
+				lastPass.add(combination);
 			}
 		}
-		HashSet<ColumnCombinationBitset> lastPass = new HashSet<ColumnCombinationBitset>(combinations);
-		HashSet<ColumnCombinationBitset> newCombinations;
+		
+		HashSet<ColumnCombinationBitset> newCombinations = new HashSet<ColumnCombinationBitset>();
+		HashSet<ColumnCombinationBitset> currentCombinations = new HashSet<ColumnCombinationBitset>();
 		
 		// Iterate over columns to possibly add for a new combination
 		for(int subsetsize = 0; subsetsize < this.columnNames.size() -1; subsetsize++) {
-			newCombinations = new HashSet<ColumnCombinationBitset>();
+			newCombinations.clear();;
 			// iterate over combinations from last pass
+			System.out.println("Length: " + (subsetsize+1));
+			
+			currentCombinations.clear();
 			for (ColumnCombinationBitset combination : lastPass) {
 				for(int j = 0; j < this.columnNames.size(); j++) {
 					if(!combination.containsColumn(j)) {
 						ColumnCombinationBitset tmpCombination = new ColumnCombinationBitset(combination);
 						tmpCombination.addColumn(j);
+						if (currentCombinations.contains(tmpCombination)) {
+							continue;
+						}
+						currentCombinations.add(tmpCombination);
 						// is it min key? ->
 						if (!minKeys.contains(tmpCombination)) {
-							if (this.isUnique(tmpCombination)) {
-								// check, if key is not minimal
-								boolean isMinKey = true;
-								for (ColumnCombinationBitset minKey : minKeys) {
-									if (tmpCombination.containsSubset(minKey)) {
-										isMinKey = false;
-										break;
-									}
+							// check, if a key is not a subset of tmpCombination
+							boolean keyIsNotSubset = true;
+							for (ColumnCombinationBitset minKey : minKeys) {
+								if (tmpCombination.containsSubset(minKey)) {
+									keyIsNotSubset = false;
+									break;
 								}
-								if (isMinKey) {
-									minKeys.add(tmpCombination);
-								}
-							} else {
-								newCombinations.add(tmpCombination);
 							}
+							if (keyIsNotSubset) {
+								if (this.isUnique(tmpCombination)) {
+									minKeys.add(tmpCombination);
+									System.out.println("adding: " + tmpCombination.toString());
+								} else {
+									newCombinations.add(tmpCombination);
+								}
+							}
+								
+//							if (this.isUnique(tmpCombination)) {
+//								// check, if key is not minimal
+//								boolean isMinKey = true;
+//								for (ColumnCombinationBitset minKey : minKeys) {
+//									if (tmpCombination.containsSubset(minKey)) {
+//										isMinKey = false;
+//										break;
+//									}
+//								}
+//								if (isMinKey) {
+//									minKeys.add(tmpCombination);
+//								}
+//							} else {
+//								newCombinations.add(tmpCombination);
+//							}
 						}	
 					}
 
 				}
 			}
 			lastPass = newCombinations;
-			combinations.addAll(newCombinations);
+//			combinations.addAll(newCombinations);
 		}
 		
 		
@@ -111,7 +137,11 @@ public class SuperUCCAlgorithm {
 //				}
 //			}
 //		}
-		for (ColumnCombinationBitset combination : minKeys) {
+		List<ColumnCombinationBitset> sorted = new ArrayList<ColumnCombinationBitset>(minKeys);
+		Collections.sort(sorted);
+		
+		List<UniqueColumnCombination> results = new ArrayList<UniqueColumnCombination>();
+		for (ColumnCombinationBitset combination : sorted) {
 			results.add(this.columnsAsUCC(combination));
 		}
 		
