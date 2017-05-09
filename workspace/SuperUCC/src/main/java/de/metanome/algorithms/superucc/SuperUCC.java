@@ -42,26 +42,26 @@ public class SuperUCC extends SuperUCCAlgorithm 				// Separating the algorithm 
 		conf.add(new ConfigurationRequirementRelationalInput(SuperUCC.Identifier.INPUT_GENERATOR.name()));
 		//conf.add(new ConfigurationRequirementRelationalInput(MyIndDetector.Identifier.INPUT_GENERATOR.name(), ConfigurationRequirement.ARBITRARY_NUMBER_OF_VALUES)); // An algorithm can ask for more than one input; this is typical for IND detection algorithms
 
-		ConfigurationRequirementString stringParameter = new ConfigurationRequirementString(SuperUCC.Identifier.SOME_STRING_PARAMETER.name());
-		String[] defaultStringParameter = new String[1];
-		defaultStringParameter[0] = "default value";
-		stringParameter.setDefaultValues(defaultStringParameter);
-		stringParameter.setRequired(true);
-		conf.add(stringParameter);
-		
-		ConfigurationRequirementInteger integerParameter = new ConfigurationRequirementInteger(SuperUCC.Identifier.SOME_INTEGER_PARAMETER.name());
-		Integer[] defaultIntegerParameter = new Integer[1];
-		defaultIntegerParameter[0] = Integer.valueOf(42);
-		integerParameter.setDefaultValues(defaultIntegerParameter);
-		integerParameter.setRequired(true);
-		conf.add(integerParameter);
-
-		ConfigurationRequirementBoolean booleanParameter = new ConfigurationRequirementBoolean(SuperUCC.Identifier.SOME_BOOLEAN_PARAMETER.name());
-		Boolean[] defaultBooleanParameter = new Boolean[1];
-		defaultBooleanParameter[0] = Boolean.valueOf(true);
-		booleanParameter.setDefaultValues(defaultBooleanParameter);
-		booleanParameter.setRequired(true);
-		conf.add(booleanParameter);
+//		ConfigurationRequirementString stringParameter = new ConfigurationRequirementString(SuperUCC.Identifier.SOME_STRING_PARAMETER.name());
+//		String[] defaultStringParameter = new String[1];
+//		defaultStringParameter[0] = "default value";
+//		stringParameter.setDefaultValues(defaultStringParameter);
+//		stringParameter.setRequired(true);
+//		conf.add(stringParameter);
+//		
+//		ConfigurationRequirementInteger integerParameter = new ConfigurationRequirementInteger(SuperUCC.Identifier.SOME_INTEGER_PARAMETER.name());
+//		Integer[] defaultIntegerParameter = new Integer[1];
+//		defaultIntegerParameter[0] = Integer.valueOf(42);
+//		integerParameter.setDefaultValues(defaultIntegerParameter);
+//		integerParameter.setRequired(true);
+//		conf.add(integerParameter);
+//
+//		ConfigurationRequirementBoolean booleanParameter = new ConfigurationRequirementBoolean(SuperUCC.Identifier.SOME_BOOLEAN_PARAMETER.name());
+//		Boolean[] defaultBooleanParameter = new Boolean[1];
+//		defaultBooleanParameter[0] = Boolean.valueOf(true);
+//		booleanParameter.setDefaultValues(defaultBooleanParameter);
+//		booleanParameter.setRequired(true);
+//		conf.add(booleanParameter);
 		
 		return conf;
 	}

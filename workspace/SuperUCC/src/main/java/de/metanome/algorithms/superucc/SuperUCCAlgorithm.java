@@ -67,7 +67,17 @@ public class SuperUCCAlgorithm {
 						// is it min key? ->
 						if (!minKeys.contains(tmpCombination)) {
 							if (this.isUnique(tmpCombination)) {
-								minKeys.add(tmpCombination);
+								// check, if key is not minimal
+								boolean isMinKey = true;
+								for (ColumnCombinationBitset minKey : minKeys) {
+									if (tmpCombination.containsSubset(minKey)) {
+										isMinKey = false;
+										break;
+									}
+								}
+								if (isMinKey) {
+									minKeys.add(tmpCombination);
+								}
 							} else {
 								newCombinations.add(tmpCombination);
 							}
