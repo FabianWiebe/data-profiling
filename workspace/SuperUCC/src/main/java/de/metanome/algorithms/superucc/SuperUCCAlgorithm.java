@@ -40,8 +40,7 @@ public class SuperUCCAlgorithm {
 		this.print(records);
 		
 		HashSet<ColumnCombinationBitset> minKeys = new HashSet<ColumnCombinationBitset>();
-		
-//		List<ColumnCombinationBitset> combinations = new LinkedList<ColumnCombinationBitset>();
+
 		HashSet<ColumnCombinationBitset> lastPass = new HashSet<ColumnCombinationBitset>();
 		for(int columnId = 0; columnId < this.columnNames.size(); columnId++)
 		{
@@ -54,18 +53,15 @@ public class SuperUCCAlgorithm {
 			}
 		}
 		
-		HashSet<ColumnCombinationBitset> newCombinations = new HashSet<ColumnCombinationBitset>();
 		HashSet<ColumnCombinationBitset> currentCombinations = new HashSet<ColumnCombinationBitset>();
 		
 		// Iterate over columns to possibly add for a new combination
-		for(int subsetsize = 0; subsetsize < this.columnNames.size() -1; subsetsize++) {
-			newCombinations.clear();;
-			// iterate over combinations from last pass
-			System.out.println("Length: " + (subsetsize+1));
+		for(int subsetsize = 1; subsetsize < this.columnNames.size() && lastPass.size() > 0; ++subsetsize) {
+			HashSet<ColumnCombinationBitset> newCombinations = new HashSet<ColumnCombinationBitset>();
 			
 			currentCombinations.clear();
 			for (ColumnCombinationBitset combination : lastPass) {
-				for(int j = 0; j < this.columnNames.size(); j++) {
+				for(int j = 0; j < this.columnNames.size(); ++j) {
 					if(!combination.containsColumn(j)) {
 						ColumnCombinationBitset tmpCombination = new ColumnCombinationBitset(combination);
 						tmpCombination.addColumn(j);
@@ -73,70 +69,29 @@ public class SuperUCCAlgorithm {
 							continue;
 						}
 						currentCombinations.add(tmpCombination);
-						// is it min key? ->
-						if (!minKeys.contains(tmpCombination)) {
-							// check, if a key is not a subset of tmpCombination
-							boolean keyIsNotSubset = true;
-							for (ColumnCombinationBitset minKey : minKeys) {
-								if (tmpCombination.containsSubset(minKey)) {
-									keyIsNotSubset = false;
-									break;
-								}
+						boolean keyIsNotSubset = true;
+						for (ColumnCombinationBitset minKey : minKeys) {
+							if (tmpCombination.containsSubset(minKey)) {
+								keyIsNotSubset = false;
+								break;
 							}
-							if (keyIsNotSubset) {
-								if (this.isUnique(tmpCombination)) {
-									minKeys.add(tmpCombination);
-									System.out.println("adding: " + tmpCombination.toString());
-								} else {
-									newCombinations.add(tmpCombination);
-								}
+							
+						}
+						if (keyIsNotSubset) {
+							if (this.isUnique(tmpCombination)) {
+								minKeys.add(tmpCombination);
+							} else {
+								newCombinations.add(tmpCombination);
 							}
-								
-//							if (this.isUnique(tmpCombination)) {
-//								// check, if key is not minimal
-//								boolean isMinKey = true;
-//								for (ColumnCombinationBitset minKey : minKeys) {
-//									if (tmpCombination.containsSubset(minKey)) {
-//										isMinKey = false;
-//										break;
-//									}
-//								}
-//								if (isMinKey) {
-//									minKeys.add(tmpCombination);
-//								}
-//							} else {
-//								newCombinations.add(tmpCombination);
-//							}
 						}	
 					}
 
 				}
 			}
 			lastPass = newCombinations;
-//			combinations.addAll(newCombinations);
 		}
 		
 		
-//		for(int i = 0; i < combinations.size(); i++)
-//		{
-//			ColumnCombinationBitset combination = combinations.get(i);
-//			if(this.isUnique(combination))
-//			{
-//				results.add(this.columnsAsUCC(combination));
-//				for(int j = i + 1; j < combinations.size();)
-//				{
-//					if(combinations.get(j).containsSubset(combination))
-//					{
-//						combinations.remove(j);
-//						System.out.println("removing " + j);
-//					}
-//					else
-//					{
-//						j++;
-//					}
-//				}
-//			}
-//		}
 		List<ColumnCombinationBitset> sorted = new ArrayList<ColumnCombinationBitset>(minKeys);
 		Collections.sort(sorted);
 		
@@ -166,11 +121,20 @@ public class SuperUCCAlgorithm {
 		for(List<String> row : records)
 		{
 			String[] values = new String[columnIds.size()];
-			for(int i = 0; i < columnIds.size(); i++)
+			
+			boolean hasNull = false;
+			for(int i = 0; i < columnIds.size(); ++i)
 			{
 				values[i] = row.get(columnIds.get(i));
+				if (values[i] == null) {
+					hasNull = true;
+					break;
+				}
 			}
-			
+			// NULL != NULL
+			if (hasNull) {
+				continue;
+			}
 			Subrow subrow = new Subrow(values);
 			if(hashSet.contains(subrow))
 			{
