@@ -92,13 +92,22 @@ public class SuperUCCAlgorithm {
 		}
 		
 		
-		List<ColumnCombinationBitset> sorted = new ArrayList<ColumnCombinationBitset>(minKeys);
-		Collections.sort(sorted);
+
 		
 		List<UniqueColumnCombination> results = new ArrayList<UniqueColumnCombination>();
-		for (ColumnCombinationBitset combination : sorted) {
-			results.add(this.columnsAsUCC(combination));
+		boolean resultSorted = false;
+		if (resultSorted) {
+			List<ColumnCombinationBitset> sorted = new ArrayList<ColumnCombinationBitset>(minKeys);
+			Collections.sort(sorted);
+			for (ColumnCombinationBitset combination : sorted) {
+				results.add(this.columnsAsUCC(combination));
+			}
+		} else {
+			for (ColumnCombinationBitset combination : minKeys) {
+				results.add(this.columnsAsUCC(combination));
+			}
 		}
+
 		
 		this.emit(results);
 	}
