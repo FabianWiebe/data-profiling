@@ -34,8 +34,8 @@ public class Subrow {
 		
 		for(int i = 0; i < this.values.length; i++)
 		{
-			// null != null is checked at creation
-			if(rhs.values[i] == null || this.values[i] == null || !this.values[i].equals(rhs.values[i]))
+			// null != null is checked before creation
+			if(!this.values[i].equals(rhs.values[i])) // rhs.values[i] == null || this.values[i] == null || 
 			{
 				return false;
 			}
@@ -53,7 +53,8 @@ public class Subrow {
 		int sum = 0;
 		for(String value : this.values)
 		{
-			result = prime * result + ((value == null) ? 0 : value.hashCode());
+			// null != null is checked  before creation
+			result = prime * result + value.hashCode(); //((value == null) ? 0 : value.hashCode());
 		}
 		
 		return sum;
