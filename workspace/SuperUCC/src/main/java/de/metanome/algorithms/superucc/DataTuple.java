@@ -1,11 +1,11 @@
 package de.metanome.algorithms.superucc;
 
-public class Subrow {
+public class DataTuple {
 	
 	public String[] values;
 //	public boolean hasNull = false;
 	
-	public Subrow(String... vals)
+	public DataTuple(String... vals)
 	{
 		values = vals;
 //		for (String val : vals) {
@@ -19,7 +19,7 @@ public class Subrow {
 	@Override
 	public boolean equals(Object o)
 	{
-		if(!(o instanceof Subrow))
+		if(!(o instanceof DataTuple))
 		{
 			return false;
 		}
@@ -27,7 +27,7 @@ public class Subrow {
 		if(o == this)
 			return true;
 		
-		Subrow rhs = (Subrow) o;
+		DataTuple rhs = (DataTuple) o;
 		
 		if(this.values.length != rhs.values.length)
 			return false;

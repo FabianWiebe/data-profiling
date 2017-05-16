@@ -116,7 +116,7 @@ public class SuperUCCAlgorithm {
 	
 	protected boolean isUnique(List<Integer> columnIds)
 	{
-		HashSet<Subrow> hashSet = new HashSet<Subrow>();
+		HashSet<DataTuple> hashSet = new HashSet<DataTuple>();
 		
 		for(List<String> row : records)
 		{
@@ -135,7 +135,7 @@ public class SuperUCCAlgorithm {
 			if (hasNull) {
 				continue;
 			}
-			Subrow subrow = new Subrow(values);
+			DataTuple subrow = new DataTuple(values);
 			if(hashSet.contains(subrow))
 			{
 				return false;
