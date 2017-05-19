@@ -57,19 +57,25 @@ public class SuperUCCAlgorithm {
 		
 		// Iterate over columns to possibly add for a new combination
 		for(int subsetsize = 1; subsetsize < this.columnNames.size() && lastPass.size() > 0; ++subsetsize) {
+			// Check UCC of size subsetsize
 			HashSet<ColumnCombinationBitset> newCombinations = new HashSet<ColumnCombinationBitset>();
 			
 			currentCombinations.clear();
+			// for every non UCC of size subsetsize - 1 ...
 			for (ColumnCombinationBitset combination : lastPass) {
+				// ... add each column seperately
 				for(int j = 0; j < this.columnNames.size(); ++j) {
+					// check if the column already existed in the non UCC
 					if(!combination.containsColumn(j)) {
 						ColumnCombinationBitset tmpCombination = new ColumnCombinationBitset(combination);
 						tmpCombination.addColumn(j);
+						// the same combinations are generated multiple times - only check each combination once
 						if (currentCombinations.contains(tmpCombination)) {
 							continue;
 						}
 						currentCombinations.add(tmpCombination);
 						boolean keyIsNotSubset = true;
+						// check if new combination contains an already found UCC
 						for (ColumnCombinationBitset minKey : minKeys) {
 							if (tmpCombination.containsSubset(minKey)) {
 								keyIsNotSubset = false;
