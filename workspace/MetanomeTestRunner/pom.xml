@@ -36,6 +36,12 @@
     </dependency>
     
     <dependency>
+      <groupId>de.metanome.algorithms.superfd</groupId>
+      <artifactId>SuperFD</artifactId>
+      <version>${metanome.version}</version>
+    </dependency>
+    
+    <dependency>
       <groupId>de.metanome</groupId>
       <artifactId>algorithm_integration</artifactId>
       <version>${metanome.version}</version>

@@ -15,6 +15,7 @@ import de.metanome.algorithm_integration.input.RelationalInputGenerator;
 import de.metanome.algorithm_integration.results.UniqueColumnCombination;
 import de.metanome.algorithm_integration.results.Result;
 import de.metanome.algorithms.superucc.SuperUCC;
+import de.metanome.algorithms.superfd.SuperFD;
 import de.metanome.backend.input.file.DefaultFileInputGenerator;
 import de.metanome.backend.result_receiver.ResultCache;
 import de.uni_potsdam.hpi.metanome_test_runner.config.Config;
@@ -32,7 +33,13 @@ public class MetanomeMock {
 			
 			ResultCache resultReceiver = new ResultCache("MetanomeMock", getAcceptedColumns(inputGenerator));
 			
-			SuperUCC algorithm = new SuperUCC();
+//			SuperUCC algorithm = new SuperUCC();
+//			algorithm.setRelationalInputConfigurationValue(SuperUCC.Identifier.INPUT_GENERATOR.name(), inputGenerator);
+//			algorithm.setStringConfigurationValue(SuperUCC.Identifier.SOME_STRING_PARAMETER.name(), conf.someStringParameter);
+//			algorithm.setIntegerConfigurationValue(SuperUCC.Identifier.SOME_INTEGER_PARAMETER.name(), conf.someIntegerParameter);
+//			algorithm.setBooleanConfigurationValue(SuperUCC.Identifier.SOME_BOOLEAN_PARAMETER.name(), conf.someBooleanParameter);
+//			algorithm.setResultReceiver(resultReceiver);
+			SuperFD algorithm = new SuperFD();
 			algorithm.setRelationalInputConfigurationValue(SuperUCC.Identifier.INPUT_GENERATOR.name(), inputGenerator);
 			algorithm.setStringConfigurationValue(SuperUCC.Identifier.SOME_STRING_PARAMETER.name(), conf.someStringParameter);
 			algorithm.setIntegerConfigurationValue(SuperUCC.Identifier.SOME_INTEGER_PARAMETER.name(), conf.someIntegerParameter);

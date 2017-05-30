@@ -5,7 +5,7 @@ import java.io.File;
 public class Config {
 
 	public enum Algorithm {
-		SUPERUCC
+		SUPERFD
 	}
 	
 	public enum Dataset {
@@ -69,7 +69,7 @@ public class Config {
 	}
 	
 	public Config() {
-		this(Config.Algorithm.SUPERUCC, Config.Dataset.NCVOTER_1K);
+		this(Config.Algorithm.SUPERFD, Config.Dataset.NCVOTER_1K);
 	}
 
 	public Config(Config.Algorithm algorithm, Config.Dataset dataset) {
