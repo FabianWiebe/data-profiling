@@ -35,7 +35,7 @@ public class SuperFD extends SuperFDAlgorithm 				// Separating the algorithm im
 
 	@Override
 	public String getDescription() {
-		return "Discovers all non-trivial minial functional dependencies";
+		return "Discovers all non-trivial minimal functional dependencies";
 	}
 	
 	@Override
