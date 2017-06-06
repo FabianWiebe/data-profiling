@@ -35,7 +35,7 @@ public class SuperFD extends SuperFDAlgorithm 				// Separating the algorithm im
 
 	@Override
 	public String getDescription() {
-		return "Discovers all unique column combinations";
+		return "Discovers all non-trivial minial functional dependencies";
 	}
 	
 	@Override
