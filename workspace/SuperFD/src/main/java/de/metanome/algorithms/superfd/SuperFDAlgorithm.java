@@ -2,14 +2,19 @@ package de.metanome.algorithms.superfd;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Random;
 import java.util.Set;
 
 import de.metanome.algorithm_helper.data_structures.ColumnCombinationBitset;
+import de.metanome.algorithm_helper.data_structures.PositionListIndex;
 import de.metanome.algorithm_integration.AlgorithmConfigurationException;
 import de.metanome.algorithm_integration.AlgorithmExecutionException;
 import de.metanome.algorithm_integration.ColumnCombination;
@@ -24,6 +29,7 @@ import de.metanome.algorithm_integration.result_receiver.FunctionalDependencyRes
 import de.metanome.algorithm_integration.result_receiver.UniqueColumnCombinationResultReceiver;
 import de.metanome.algorithm_integration.results.FunctionalDependency;
 import de.metanome.algorithm_integration.results.UniqueColumnCombination;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 
 public class SuperFDAlgorithm {
 	
@@ -32,6 +38,7 @@ public class SuperFDAlgorithm {
 	
 	protected String relationName;
 	protected List<String> columnNames;
+	protected List<PositionListIndex> plis;
 	
 	List<List<String>> records;
 	
@@ -40,6 +47,8 @@ public class SuperFDAlgorithm {
 		this.initialize();
 		records = this.readInput();
 		this.print(records);
+		
+		genPLIs();
 		
 		HashSet<ColumnCombinationBitset> minKeys = new HashSet<ColumnCombinationBitset>();
 
@@ -126,6 +135,44 @@ public class SuperFDAlgorithm {
 		this.columnNames = input.columnNames();
 	}
 	
+	protected void genPLIs() {
+		this.plis = new ArrayList<PositionListIndex>(this.columnNames.size());
+		List<HashMap<String, LongArrayList>> m = new ArrayList<HashMap<String, LongArrayList>>(this.columnNames.size());
+		for (int i = 0; i < this.columnNames.size(); ++i) {
+			m.add(new HashMap<String, LongArrayList>());
+		}
+		ListIterator<List<String>> row_iter = records.listIterator();
+		while (row_iter.hasNext())
+		{
+			long row_id = (long) row_iter.nextIndex();
+			ListIterator<String> iter = row_iter.next().listIterator();
+			while (iter.hasNext()) {
+				HashMap<String, LongArrayList> cur_m = m.get(iter.nextIndex());
+				String val = iter.next();
+			    if (val == null) {
+			    	continue;
+			    }
+			    if (cur_m.containsKey(val)) {
+			    	cur_m.get(val).add(row_id);
+			    } else {
+			    	cur_m.put(val, new LongArrayList(Arrays.asList(row_id)));
+			    }
+			}
+		}
+		ListIterator<HashMap<String, LongArrayList>> col_iter = m.listIterator();
+		while (col_iter.hasNext())
+		{
+			Collection<LongArrayList> sets = col_iter.next().values();
+			Iterator<LongArrayList> iter = sets.iterator();
+			while (iter.hasNext()) {
+				if (iter.next().size() <= 1) {
+					iter.remove();
+				}
+			}
+			this.plis.add(new PositionListIndex(new ArrayList<LongArrayList>(sets)));
+		}
+	}
+	
 	protected boolean isUnique(ColumnCombinationBitset combination)
 	{
 		return this.isUnique(combination.getSetBits());
@@ -133,37 +180,52 @@ public class SuperFDAlgorithm {
 	
 	protected boolean isUnique(List<Integer> columnIds)
 	{
-		HashSet<DataTuple> hashSet = new HashSet<DataTuple>();
-		
-		for(List<String> row : records)
-		{
-			String[] values = new String[columnIds.size()];
-			
-			boolean hasNull = false;
-			for(int i = 0; i < columnIds.size(); ++i)
-			{
-				values[i] = row.get(columnIds.get(i));
-				if (values[i] == null) {
-					hasNull = true;
-					break;
+		if (columnIds.size() == 0) {
+			return false;
+		}
+		Iterator<Integer> itr = columnIds.iterator();
+		PositionListIndex cur = this.plis.get(itr.next());
+		while(itr.hasNext()) {
+			cur = cur.intersect(this.plis.get(itr.next()));
+			Iterator<LongArrayList> iter = cur.getClusters().iterator();
+			while (iter.hasNext()) {
+				if (iter.next().size() <= 1) {
+					iter.remove();
 				}
 			}
-			// NULL != NULL
-			if (hasNull) {
-				continue;
-			}
-			DataTuple subrow = new DataTuple(values);
-			if(hashSet.contains(subrow))
-			{
-				return false;
-			}
-			else
-			{
-				hashSet.add(subrow);
-			}
 		}
-		
-		return true;
+		return cur.size() == 0;
+//		HashSet<DataTuple> hashSet = new HashSet<DataTuple>();
+//		
+//		for(List<String> row : records)
+//		{
+//			String[] values = new String[columnIds.size()];
+//			
+//			boolean hasNull = false;
+//			for(int i = 0; i < columnIds.size(); ++i)
+//			{
+//				values[i] = row.get(columnIds.get(i));
+//				if (values[i] == null) {
+//					hasNull = true;
+//					break;
+//				}
+//			}
+//			// NULL != NULL
+//			if (hasNull) {
+//				continue;
+//			}
+//			DataTuple subrow = new DataTuple(values);
+//			if(hashSet.contains(subrow))
+//			{
+//				return false;
+//			}
+//			else
+//			{
+//				hashSet.add(subrow);
+//			}
+//		}
+//		
+//		return true;
 	}
 	
 	protected UniqueColumnCombination columnsAsUCC(ColumnCombinationBitset combination)
