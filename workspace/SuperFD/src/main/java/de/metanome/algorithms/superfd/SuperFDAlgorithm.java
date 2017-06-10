@@ -204,15 +204,9 @@ public class SuperFDAlgorithm {
 				}
 			}
 		}
-		long current_size = cur.size();
+		long key_error = cur.getRawKeyError();
 		cur = cur.intersect(this.plis.get(dependant));
-		Iterator<LongArrayList> iter = cur.getClusters().iterator();
-		while (iter.hasNext()) {
-			if (iter.next().size() <= 1) {
-				iter.remove();
-			}
-		}
-		return current_size == cur.size();
+		return key_error == cur.getRawKeyError();
 	}
 	
 	protected boolean isUnique(ColumnCombinationBitset combination)
