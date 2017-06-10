@@ -9,7 +9,7 @@ public class Config {
 	}
 	
 	public enum Dataset {
-		PLANETS, SYMBOLS, SCIENCE, SATELLITES, GAME, ASTRONOMICAL, ABALONE, ADULT, BALANCE, BREAST, BRIDGES, CHESS, ECHODIAGRAM, FLIGHT, HEPATITIS, HORSE, IRIS, LETTER, NURSERY, PETS, NCVOTER_1K, UNIPROD_1K
+		PLANETS, SYMBOLS, SCIENCE, SATELLITES, GAME, ASTRONOMICAL, ABALONE, ADULT, BALANCE, BREAST, BRIDGES, CHESS, ECHODIAGRAM, FLIGHT, HEPATITIS, HORSE, IRIS, LETTER, NURSERY, PETS, NCVOTER_1K, NCVOTER_1K_OWN, UNIPROD_1K
 	}
 	
 	public Config.Algorithm algorithm;
@@ -69,7 +69,7 @@ public class Config {
 	}
 	
 	public Config() {
-		this(Config.Algorithm.SUPERFD, Config.Dataset.NCVOTER_1K);
+		this(Config.Algorithm.SUPERFD, Config.Dataset.NCVOTER_1K_OWN); //NCVOTER_1K
 	}
 
 	public Config(Config.Algorithm algorithm, Config.Dataset dataset) {
@@ -191,6 +191,11 @@ public class Config {
 				this.inputDatasetName = "ncvoter_1001r_19c";
 				this.inputFileSeparator = ',';
 				this.inputFileHasHeader = true;
+			case NCVOTER_1K_OWN:
+				this.inputDatasetName = "ncvoter-1k";
+				this.inputFileSeparator = ',';
+				this.inputFileHasHeader = true;
+				this.inputFileQuotechar = '"';
 				break;
 			case UNIPROD_1K:
 				this.inputDatasetName = "uniprot_1001r_223c";
