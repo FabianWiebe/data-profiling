@@ -48,7 +48,8 @@ public class SuperFDAlgorithm {
 
 		this.initialize();
 		records = this.readInput();
-		this.print(records);
+//		this.print(records);
+		System.out.println("starting find fd algo with data set " + this.relationName);
 		
 		genPLIs();
 		//List<Pair<ColumnCombinationBitset, Integer>> fds = new ArrayList<Pair<ColumnCombinationBitset, Integer>>();
@@ -106,7 +107,7 @@ public class SuperFDAlgorithm {
 			}
 			
 			// Ll+1 := gen next level
-			HashSet<ColumnCombinationBitset> l_plus_1 = new HashSet<ColumnCombinationBitset>();
+			ArrayList<ColumnCombinationBitset> l_plus_1 = new ArrayList<ColumnCombinationBitset>();
 			Collections.sort(L_l);
 			ListIterator<ColumnCombinationBitset> iter = L_l.listIterator();
 			ColumnCombinationBitset first = iter.next();
@@ -133,7 +134,7 @@ public class SuperFDAlgorithm {
 				}
 			}
 			
-			L.add(new ArrayList<ColumnCombinationBitset>(l_plus_1));
+			L.add(l_plus_1);
 			++l;
 		}
 		
