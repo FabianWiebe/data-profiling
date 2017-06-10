@@ -49,10 +49,10 @@ public class SuperFDAlgorithm {
 		this.initialize();
 		records = this.readInput();
 //		this.print(records);
-		System.out.println("starting find fd algo with data set " + this.relationName);
+		System.out.println("Starting Super FD with data set: " + this.relationName);
 		
 		genPLIs();
-		//List<Pair<ColumnCombinationBitset, Integer>> fds = new ArrayList<Pair<ColumnCombinationBitset, Integer>>();
+		
 		List<FunctionalDependency> results = new ArrayList<FunctionalDependency>();
 		
 		ColumnCombinationBitset emptySet = new ColumnCombinationBitset();
@@ -172,15 +172,9 @@ public class SuperFDAlgorithm {
 		this.is_one_value = new ArrayList<Boolean>();
 		while (col_iter.hasNext())
 		{
-			Collection<LongArrayList> sets = col_iter.next().values();
+			List<LongArrayList> sets = new ArrayList<LongArrayList>(col_iter.next().values());
 			this.is_one_value.add(sets.size() == 1);
-			Iterator<LongArrayList> iter = sets.iterator();
-			while (iter.hasNext()) {
-				if (iter.next().size() <= 1) {
-					iter.remove();
-				}
-			}
-			this.plis.add(new PositionListIndex(new ArrayList<LongArrayList>(sets)));
+			this.plis.add(strippPartition(new PositionListIndex(sets)));
 		}
 	}
 	
@@ -197,17 +191,21 @@ public class SuperFDAlgorithm {
 		Iterator<Integer> itr = columnIds.iterator();
 		PositionListIndex cur = this.plis.get(itr.next());
 		while(itr.hasNext()) {
-			cur = cur.intersect(this.plis.get(itr.next()));
-			Iterator<LongArrayList> iter = cur.getClusters().iterator();
-			while (iter.hasNext()) {
-				if (iter.next().size() <= 1) {
-					iter.remove();
-				}
-			}
+			cur = strippPartition(cur.intersect(this.plis.get(itr.next())));
 		}
 		long key_error = cur.getRawKeyError();
 		cur = cur.intersect(this.plis.get(dependant));
 		return key_error == cur.getRawKeyError();
+	}
+	
+	protected PositionListIndex strippPartition(PositionListIndex pli) {
+		Iterator<LongArrayList> iter = pli.getClusters().iterator();
+		while (iter.hasNext()) {
+			if (iter.next().size() <= 1) {
+				iter.remove();
+			}
+		}
+		return pli;
 	}
 	
 	protected boolean isUnique(ColumnCombinationBitset combination)
