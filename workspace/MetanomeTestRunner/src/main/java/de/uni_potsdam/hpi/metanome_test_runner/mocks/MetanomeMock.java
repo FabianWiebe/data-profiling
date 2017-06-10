@@ -13,6 +13,7 @@ import de.metanome.algorithm_integration.input.InputGenerationException;
 import de.metanome.algorithm_integration.input.RelationalInput;
 import de.metanome.algorithm_integration.input.RelationalInputGenerator;
 import de.metanome.algorithm_integration.results.UniqueColumnCombination;
+import de.metanome.algorithm_integration.results.FunctionalDependency;
 import de.metanome.algorithm_integration.results.Result;
 import de.metanome.algorithms.superucc.SuperUCC;
 import de.metanome.algorithms.superfd.SuperFD;
@@ -84,7 +85,8 @@ public class MetanomeMock {
 	private static String format(List<Result> results) {
 		StringBuilder builder = new StringBuilder();
 		for (Result result : results) {
-			UniqueColumnCombination od = (UniqueColumnCombination) result;
+//			UniqueColumnCombination od = (UniqueColumnCombination) result;
+			FunctionalDependency od = (FunctionalDependency) result;
 			builder.append(od.toString() + "\r\n");
 		}
 		return builder.toString();

@@ -10,10 +10,11 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import de.metanome.algorithm_helper.data_structures.ColumnCombinationBitset;
+import de.metanome.algorithms.superfd.ColumnCombinationBitset;
 import de.metanome.algorithm_helper.data_structures.PositionListIndex;
 import de.metanome.algorithm_integration.AlgorithmConfigurationException;
 import de.metanome.algorithm_integration.AlgorithmExecutionException;
@@ -39,6 +40,7 @@ public class SuperFDAlgorithm {
 	protected String relationName;
 	protected List<String> columnNames;
 	protected List<PositionListIndex> plis;
+	protected List<Boolean> is_one_value;
 	
 	List<List<String>> records;
 	
@@ -49,82 +51,95 @@ public class SuperFDAlgorithm {
 		this.print(records);
 		
 		genPLIs();
+		//List<Pair<ColumnCombinationBitset, Integer>> fds = new ArrayList<Pair<ColumnCombinationBitset, Integer>>();
+		List<FunctionalDependency> results = new ArrayList<FunctionalDependency>();
 		
-		HashSet<ColumnCombinationBitset> minKeys = new HashSet<ColumnCombinationBitset>();
-
-		HashSet<ColumnCombinationBitset> lastPass = new HashSet<ColumnCombinationBitset>();
-		for(int columnId = 0; columnId < this.columnNames.size(); columnId++)
+		ColumnCombinationBitset emptySet = new ColumnCombinationBitset();
+		List<List<ColumnCombinationBitset>> L = new ArrayList<List<ColumnCombinationBitset>>();
+		List<ColumnCombinationBitset> L0 = new ArrayList<ColumnCombinationBitset>();
+		L0.add(emptySet);
+		L.add(L0);
+		ColumnCombinationBitset R = new ColumnCombinationBitset();
+		HashMap<ColumnCombinationBitset, ColumnCombinationBitset> C = new HashMap<ColumnCombinationBitset, ColumnCombinationBitset>();
+		
+		List<ColumnCombinationBitset> L1 = new ArrayList<ColumnCombinationBitset>();
+		for(int columnId = 0; columnId < this.columnNames.size(); ++columnId)
 		{
-			// is it key?v -> do not add lastpass
-			ColumnCombinationBitset combination = new ColumnCombinationBitset(columnId);
-			if (this.isUnique(combination)) {
-				minKeys.add(combination);
+			if (this.is_one_value.get(columnId)) {
+				results.add(createFD(emptySet, columnId));
 			} else {
-				lastPass.add(combination);
+				R.addColumn(columnId);
+				L1.add(new ColumnCombinationBitset(columnId));
 			}
 		}
-		
-//		HashSet<ColumnCombinationBitset> currentCombinations = new HashSet<ColumnCombinationBitset>();
-//		
-//		// Iterate over columns to possibly add for a new combination
-//		for(int subsetsize = 1; subsetsize < this.columnNames.size() && lastPass.size() > 0; ++subsetsize) {
-//			// Check UCC of size subsetsize
-//			HashSet<ColumnCombinationBitset> newCombinations = new HashSet<ColumnCombinationBitset>();
-//			
-//			currentCombinations.clear();
-//			// for every non UCC of size subsetsize - 1 ...
-//			for (ColumnCombinationBitset combination : lastPass) {
-//				// ... add each column seperately
-//				for(int j = 0; j < this.columnNames.size(); ++j) {
-//					// check if the column already existed in the non UCC
-//					if(!combination.containsColumn(j)) {
-//						ColumnCombinationBitset tmpCombination = new ColumnCombinationBitset(combination);
-//						tmpCombination.addColumn(j);
-//						// the same combinations are generated multiple times - only check each combination once
-//						if (currentCombinations.contains(tmpCombination)) {
-//							continue;
-//						}
-//						currentCombinations.add(tmpCombination);
-//						boolean keyIsNotSubset = true;
-//						// check if new combination contains an already found UCC
-//						for (ColumnCombinationBitset minKey : minKeys) {
-//							if (tmpCombination.containsSubset(minKey)) {
-//								keyIsNotSubset = false;
-//								break;
-//							}
-//							
-//						}
-//						if (keyIsNotSubset) {
-//							if (this.isUnique(tmpCombination)) {
-//								minKeys.add(tmpCombination);
-//							} else {
-//								newCombinations.add(tmpCombination);
-//							}
-//						}	
-//					}
-//
-//				}
-//			}
-//			lastPass = newCombinations;
-//		}
-		
-		
-
-		
-		List<FunctionalDependency> results = new ArrayList<FunctionalDependency>();
-//		boolean resultSorted = false;
-//		if (resultSorted) {
-//			List<ColumnCombinationBitset> sorted = new ArrayList<ColumnCombinationBitset>(minKeys);
-//			Collections.sort(sorted);
-//			for (ColumnCombinationBitset combination : sorted) {
-//				results.add(this.columnsAsUCC(combination));
-//			}
-//		} else {
-//			for (ColumnCombinationBitset combination : minKeys) {
-//				results.add(this.columnsAsUCC(combination));
-//			}
-//		}
-
+		C.put(emptySet, R);
+		L.add(L1);
+		int l = 1;
+		while(!L.get(l).isEmpty()) {
+			// compute deps (Ll)
+			List<ColumnCombinationBitset> L_l = L.get(l);
+			for (ColumnCombinationBitset X : L_l) {
+				ColumnCombinationBitset c_plus = R;
+				for (int c_index : X.getSetBits()) {
+					c_plus = c_plus.intersect(C.get(new ColumnCombinationBitset(X).removeColumn(c_index)));
+				}
+				C.put(X, c_plus);
+			}
+			for (ColumnCombinationBitset X : L_l) {
+				ColumnCombinationBitset c_plus = C.get(X);
+				for (int c_index : X.intersect(c_plus).getSetBits()) {
+					ColumnCombinationBitset determant = new ColumnCombinationBitset(X).removeColumn(c_index);
+					if (isFD(determant, c_index)) {
+						results.add(createFD(determant, c_index));
+						c_plus = c_plus.removeColumn(c_index).intersect(X);
+						C.put(X, c_plus);
+					}
+				}
+			}
+			
+			// prune (Ll)
+			for (Iterator<ColumnCombinationBitset> iterator = L_l.iterator(); iterator.hasNext();) {
+				ColumnCombinationBitset current = iterator.next();
+				if (C.get(current).isEmpty()) {
+					iterator.remove();
+				}
+			}
+			
+			if (L_l.isEmpty()) {
+				break;
+			}
+			
+			// Ll+1 := gen next level
+			HashSet<ColumnCombinationBitset> l_plus_1 = new HashSet<ColumnCombinationBitset>();
+			Collections.sort(L_l);
+			ListIterator<ColumnCombinationBitset> iter = L_l.listIterator();
+			ColumnCombinationBitset first = iter.next();
+			while (iter.hasNext()) {
+				ColumnCombinationBitset current_prefix = first.newWithoutLastColumn();
+				List<ColumnCombinationBitset> same_prefix = new ArrayList<ColumnCombinationBitset>(Arrays.asList(first));
+				while(iter.hasNext()) {
+					ColumnCombinationBitset current = iter.next();
+					if (current.newWithoutLastColumn().equals(current_prefix)) {
+						same_prefix.add(current);
+					} else {
+						first = current;
+						break;
+					}
+				}
+				
+				ListIterator<ColumnCombinationBitset> o_iter = same_prefix.listIterator();
+				for (int i = 0; i < same_prefix.size(); ++i) {
+					ColumnCombinationBitset o_current = o_iter.next();
+					ListIterator<ColumnCombinationBitset> i_iter = same_prefix.listIterator();
+					for (int j = 0; j < i; ++j) {
+						l_plus_1.add(o_current.union(i_iter.next()));
+					}
+				}
+			}
+			
+			L.add(new ArrayList<ColumnCombinationBitset>(l_plus_1));
+			++l;
+		}
 		
 		this.emit(results);
 	}
@@ -149,9 +164,6 @@ public class SuperFDAlgorithm {
 			while (iter.hasNext()) {
 				HashMap<String, LongArrayList> cur_m = m.get(iter.nextIndex());
 				String val = iter.next();
-			    if (val == null) {
-			    	continue;
-			    }
 			    if (cur_m.containsKey(val)) {
 			    	cur_m.get(val).add(row_id);
 			    } else {
@@ -160,9 +172,12 @@ public class SuperFDAlgorithm {
 			}
 		}
 		ListIterator<HashMap<String, LongArrayList>> col_iter = m.listIterator();
+		this.is_one_value = new ArrayList<Boolean>();
+		int i;
 		while (col_iter.hasNext())
 		{
 			Collection<LongArrayList> sets = col_iter.next().values();
+			this.is_one_value.add(sets.size() == 1);
 			Iterator<LongArrayList> iter = sets.iterator();
 			while (iter.hasNext()) {
 				if (iter.next().size() <= 1) {
@@ -171,6 +186,38 @@ public class SuperFDAlgorithm {
 			}
 			this.plis.add(new PositionListIndex(new ArrayList<LongArrayList>(sets)));
 		}
+	}
+	
+	protected boolean isFD(ColumnCombinationBitset combination, int dependant)
+	{
+		return this.isFD(combination.getSetBits(), dependant);
+	}
+	
+	protected boolean isFD(List<Integer> columnIds, int dependant)
+	{
+		if (columnIds.isEmpty()) {
+			return this.is_one_value.get(dependant);
+		}
+		Iterator<Integer> itr = columnIds.iterator();
+		PositionListIndex cur = this.plis.get(itr.next());
+		while(itr.hasNext()) {
+			cur = cur.intersect(this.plis.get(itr.next()));
+			Iterator<LongArrayList> iter = cur.getClusters().iterator();
+			while (iter.hasNext()) {
+				if (iter.next().size() <= 1) {
+					iter.remove();
+				}
+			}
+		}
+		long current_size = cur.size();
+		cur = cur.intersect(this.plis.get(dependant));
+		Iterator<LongArrayList> iter = cur.getClusters().iterator();
+		while (iter.hasNext()) {
+			if (iter.next().size() <= 1) {
+				iter.remove();
+			}
+		}
+		return current_size == cur.size();
 	}
 	
 	protected boolean isUnique(ColumnCombinationBitset combination)
@@ -195,37 +242,6 @@ public class SuperFDAlgorithm {
 			}
 		}
 		return cur.size() == 0;
-//		HashSet<DataTuple> hashSet = new HashSet<DataTuple>();
-//		
-//		for(List<String> row : records)
-//		{
-//			String[] values = new String[columnIds.size()];
-//			
-//			boolean hasNull = false;
-//			for(int i = 0; i < columnIds.size(); ++i)
-//			{
-//				values[i] = row.get(columnIds.get(i));
-//				if (values[i] == null) {
-//					hasNull = true;
-//					break;
-//				}
-//			}
-//			// NULL != NULL
-//			if (hasNull) {
-//				continue;
-//			}
-//			DataTuple subrow = new DataTuple(values);
-//			if(hashSet.contains(subrow))
-//			{
-//				return false;
-//			}
-//			else
-//			{
-//				hashSet.add(subrow);
-//			}
-//		}
-//		
-//		return true;
 	}
 	
 	protected UniqueColumnCombination columnsAsUCC(ColumnCombinationBitset combination)
@@ -245,6 +261,11 @@ public class SuperFDAlgorithm {
 		
 		UniqueColumnCombination combination = new UniqueColumnCombination(identifiers);
 		return combination;
+	}
+	
+	protected FunctionalDependency createFD(ColumnCombinationBitset combination, int dependant)
+	{
+		return new FunctionalDependency(combination.createColumnCombination(this.relationName, this.columnNames), this.getColumnIdentifierForColumnId(dependant));
 	}
 	
 	protected List<List<String>> readInput() throws InputGenerationException, AlgorithmConfigurationException, InputIterationException {
