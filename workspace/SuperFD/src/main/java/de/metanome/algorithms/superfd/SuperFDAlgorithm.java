@@ -65,12 +65,8 @@ public class SuperFDAlgorithm {
 		List<ColumnCombinationBitset> L1 = new ArrayList<ColumnCombinationBitset>();
 		for(int columnId = 0; columnId < this.columnNames.size(); ++columnId)
 		{
-			if (this.is_one_value.get(columnId)) {
-				results.add(createFD(emptySet, columnId));
-			} else {
-				R.addColumn(columnId);
-				L1.add(new ColumnCombinationBitset(columnId));
-			}
+			R.addColumn(columnId);
+			L1.add(new ColumnCombinationBitset(columnId));
 		}
 		C.put(emptySet, R);
 		L.add(L1);
@@ -173,7 +169,6 @@ public class SuperFDAlgorithm {
 		}
 		ListIterator<HashMap<String, LongArrayList>> col_iter = m.listIterator();
 		this.is_one_value = new ArrayList<Boolean>();
-		int i;
 		while (col_iter.hasNext())
 		{
 			Collection<LongArrayList> sets = col_iter.next().values();
