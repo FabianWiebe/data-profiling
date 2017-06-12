@@ -40,6 +40,8 @@ public class SuperFDAlgorithm {
 	protected String relationName;
 	protected List<String> columnNames;
 	protected List<PositionListIndex> plis;
+	protected HashMap<ColumnCombinationBitset, PositionListIndex> current_plis;
+	protected HashMap<ColumnCombinationBitset, PositionListIndex> next_plis;
 	protected List<Boolean> is_one_value;
 	
 	List<List<String>> records;
@@ -52,64 +54,67 @@ public class SuperFDAlgorithm {
 		System.out.println("Starting Super FD with data set: " + this.relationName);
 		
 		genPLIs();
-		
-		List<FunctionalDependency> results = new ArrayList<FunctionalDependency>();
+		this.next_plis = new HashMap<ColumnCombinationBitset, PositionListIndex>();
 		
 		ColumnCombinationBitset emptySet = new ColumnCombinationBitset();
-		List<List<ColumnCombinationBitset>> L = new ArrayList<List<ColumnCombinationBitset>>();
-		List<ColumnCombinationBitset> L0 = new ArrayList<ColumnCombinationBitset>();
-		L0.add(emptySet);
-		L.add(L0);
+		List<ColumnCombinationBitset> current_L = new ArrayList<ColumnCombinationBitset>();
 		ColumnCombinationBitset R = new ColumnCombinationBitset();
-		HashMap<ColumnCombinationBitset, ColumnCombinationBitset> C = new HashMap<ColumnCombinationBitset, ColumnCombinationBitset>();
+		HashMap<ColumnCombinationBitset, ColumnCombinationBitset> current_C = new HashMap<ColumnCombinationBitset, ColumnCombinationBitset>();
+		HashMap<ColumnCombinationBitset, ColumnCombinationBitset> next_C = new HashMap<ColumnCombinationBitset, ColumnCombinationBitset>();
 		
-		List<ColumnCombinationBitset> L1 = new ArrayList<ColumnCombinationBitset>();
 		for(int columnId = 0; columnId < this.columnNames.size(); ++columnId)
 		{
 			R.addColumn(columnId);
-			L1.add(new ColumnCombinationBitset(columnId));
+			current_L.add(new ColumnCombinationBitset(columnId));
+			this.next_plis.put(new ColumnCombinationBitset(columnId), this.plis.get(columnId));
 		}
-		C.put(emptySet, R);
-		L.add(L1);
-		int l = 1;
-		while(!L.get(l).isEmpty()) {
+		current_C.put(emptySet, R);
+
+		while(!current_L.isEmpty()) {
 			// compute deps (Ll)
-			List<ColumnCombinationBitset> L_l = L.get(l);
-			for (ColumnCombinationBitset X : L_l) {
+			for (ColumnCombinationBitset X : current_L) {
 				ColumnCombinationBitset c_plus = R;
 				for (int c_index : X.getSetBits()) {
-					c_plus = c_plus.intersect(C.get(new ColumnCombinationBitset(X).removeColumn(c_index)));
+					c_plus = c_plus.intersect(current_C.get(new ColumnCombinationBitset(X).removeColumn(c_index)));
 				}
-				C.put(X, c_plus);
+				next_C.put(X, c_plus);
 			}
-			for (ColumnCombinationBitset X : L_l) {
-				ColumnCombinationBitset c_plus = C.get(X);
+			current_C = next_C;
+			next_C = new HashMap<ColumnCombinationBitset, ColumnCombinationBitset>();
+			
+			for (ColumnCombinationBitset X : current_L) {
+				boolean first = true;
+				ColumnCombinationBitset c_plus = current_C.get(X);
 				for (int c_index : X.intersect(c_plus).getSetBits()) {
 					ColumnCombinationBitset determant = new ColumnCombinationBitset(X).removeColumn(c_index);
-					if (isFD(determant, c_index)) {
-						results.add(createFD(determant, c_index));
+					if (isFD(determant, c_index, first)) {
+						this.resultReceiver.receiveResult(createFD(determant, c_index));
 						c_plus = c_plus.removeColumn(c_index).intersect(X);
-						C.put(X, c_plus);
+						current_C.put(X, c_plus);
 					}
+					first = false;
 				}
 			}
 			
+			this.current_plis = this.next_plis;
+			this.next_plis = new HashMap<ColumnCombinationBitset, PositionListIndex>();
+			
 			// prune (Ll)
-			for (Iterator<ColumnCombinationBitset> iterator = L_l.iterator(); iterator.hasNext();) {
+			for (Iterator<ColumnCombinationBitset> iterator = current_L.iterator(); iterator.hasNext();) {
 				ColumnCombinationBitset current = iterator.next();
-				if (C.get(current).isEmpty()) {
+				if (current_C.get(current).isEmpty()) {
 					iterator.remove();
 				}
 			}
 			
-			if (L_l.isEmpty()) {
+			if (current_L.isEmpty()) {
 				break;
 			}
 			
 			// Ll+1 := gen next level
 			ArrayList<ColumnCombinationBitset> l_plus_1 = new ArrayList<ColumnCombinationBitset>();
-			Collections.sort(L_l);
-			ListIterator<ColumnCombinationBitset> iter = L_l.listIterator();
+			Collections.sort(current_L);
+			ListIterator<ColumnCombinationBitset> iter = current_L.listIterator();
 			ColumnCombinationBitset first = iter.next();
 			while (iter.hasNext()) {
 				ColumnCombinationBitset current_prefix = first.newWithoutLastColumn();
@@ -134,11 +139,8 @@ public class SuperFDAlgorithm {
 				}
 			}
 			
-			L.add(l_plus_1);
-			++l;
+			current_L = l_plus_1;
 		}
-		
-		this.emit(results);
 	}
 	
 	protected void initialize() throws InputGenerationException, AlgorithmConfigurationException {
@@ -178,23 +180,21 @@ public class SuperFDAlgorithm {
 		}
 	}
 	
-	protected boolean isFD(ColumnCombinationBitset combination, int dependant)
-	{
-		return this.isFD(combination.getSetBits(), dependant);
+	protected boolean isFD(ColumnCombinationBitset combination, int dependant) {
+		return this.isFD(combination, dependant, true);
 	}
 	
-	protected boolean isFD(List<Integer> columnIds, int dependant)
+	protected boolean isFD(ColumnCombinationBitset combination, int dependant, boolean isNew)
 	{
-		if (columnIds.isEmpty()) {
+		if (combination.isEmpty()) {
 			return this.is_one_value.get(dependant);
 		}
-		Iterator<Integer> itr = columnIds.iterator();
-		PositionListIndex cur = this.plis.get(itr.next());
-		while(itr.hasNext()) {
-			cur = strippPartition(cur.intersect(this.plis.get(itr.next())));
-		}
+		PositionListIndex cur = this.current_plis.get(combination);
 		long key_error = cur.getRawKeyError();
-		cur = cur.intersect(this.plis.get(dependant));
+		cur = strippPartition(cur.intersect(this.plis.get(dependant)));
+		if (isNew) {
+			this.next_plis.put(combination.addColumn(dependant), cur);
+		}
 		return key_error == cur.getRawKeyError();
 	}
 	
@@ -210,7 +210,8 @@ public class SuperFDAlgorithm {
 	
 	protected boolean isUnique(ColumnCombinationBitset combination)
 	{
-		return this.isUnique(combination.getSetBits());
+		return this.current_plis.get(combination).isEmpty();
+//		return this.isUnique(combination.getSetBits());
 	}
 	
 	protected boolean isUnique(List<Integer> columnIds)
