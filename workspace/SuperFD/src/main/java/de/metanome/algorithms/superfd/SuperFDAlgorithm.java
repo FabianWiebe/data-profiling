@@ -2,17 +2,12 @@ package de.metanome.algorithms.superfd;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 
 import de.metanome.algorithms.superfd.ColumnCombinationBitset;
 import de.metanome.algorithm_helper.data_structures.PositionListIndex;
@@ -27,7 +22,6 @@ import de.metanome.algorithm_integration.input.RelationalInputGenerator;
 import de.metanome.algorithm_integration.result_receiver.ColumnNameMismatchException;
 import de.metanome.algorithm_integration.result_receiver.CouldNotReceiveResultException;
 import de.metanome.algorithm_integration.result_receiver.FunctionalDependencyResultReceiver;
-import de.metanome.algorithm_integration.result_receiver.UniqueColumnCombinationResultReceiver;
 import de.metanome.algorithm_integration.results.FunctionalDependency;
 import de.metanome.algorithm_integration.results.UniqueColumnCombination;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -46,6 +40,7 @@ public class SuperFDAlgorithm {
 	
 	List<List<String>> records;
 	
+	
 	public void execute() throws AlgorithmExecutionException {
 
 		this.initialize();
@@ -59,8 +54,8 @@ public class SuperFDAlgorithm {
 		ColumnCombinationBitset emptySet = new ColumnCombinationBitset();
 		List<ColumnCombinationBitset> current_L = new ArrayList<ColumnCombinationBitset>();
 		ColumnCombinationBitset R = new ColumnCombinationBitset();
-		HashMap<ColumnCombinationBitset, ColumnCombinationBitset> current_C = new HashMap<ColumnCombinationBitset, ColumnCombinationBitset>();
-		HashMap<ColumnCombinationBitset, ColumnCombinationBitset> next_C = new HashMap<ColumnCombinationBitset, ColumnCombinationBitset>();
+		HashMap<ColumnCombinationBitset, ColumnCombinationBitset> C = new HashMap<ColumnCombinationBitset, ColumnCombinationBitset>();
+		HashMap<ColumnCombinationBitset, ColumnCombinationBitset> next_C;
 		
 		for(int columnId = 0; columnId < this.columnNames.size(); ++columnId)
 		{
@@ -68,29 +63,29 @@ public class SuperFDAlgorithm {
 			current_L.add(new ColumnCombinationBitset(columnId));
 			this.next_plis.put(new ColumnCombinationBitset(columnId), this.plis.get(columnId));
 		}
-		current_C.put(emptySet, R);
-
+		C.put(emptySet, R);
+		
 		while(!current_L.isEmpty()) {
 			// compute deps (Ll)
+			next_C = new HashMap<ColumnCombinationBitset, ColumnCombinationBitset>();
 			for (ColumnCombinationBitset X : current_L) {
 				ColumnCombinationBitset c_plus = R;
 				for (int c_index : X.getSetBits()) {
-					c_plus = c_plus.intersect(current_C.get(new ColumnCombinationBitset(X).removeColumn(c_index)));
+					c_plus = c_plus.intersect(C.get(new ColumnCombinationBitset(X).removeColumn(c_index)));
 				}
 				next_C.put(X, c_plus);
 			}
-			current_C = next_C;
-			next_C = new HashMap<ColumnCombinationBitset, ColumnCombinationBitset>();
+			C = next_C;
 			
 			for (ColumnCombinationBitset X : current_L) {
 				boolean first = true;
-				ColumnCombinationBitset c_plus = current_C.get(X);
-				for (int c_index : X.intersect(c_plus).getSetBits()) {
-					ColumnCombinationBitset determant = new ColumnCombinationBitset(X).removeColumn(c_index);
-					if (isFD(determant, c_index, first)) {
-						this.resultReceiver.receiveResult(createFD(determant, c_index));
-						c_plus = c_plus.removeColumn(c_index).intersect(X);
-						current_C.put(X, c_plus);
+				ColumnCombinationBitset c_plus = C.get(X);
+				for (int A : X.intersect(c_plus).getSetBits()) {
+					ColumnCombinationBitset determant = new ColumnCombinationBitset(X).removeColumn(A);
+					if (isFD(determant, A, first)) {
+						this.resultReceiver.receiveResult(createFD(determant, A));
+						c_plus = c_plus.removeColumn(A).intersect(X);
+						C.put(X, c_plus);
 					}
 					first = false;
 				}
@@ -101,10 +96,25 @@ public class SuperFDAlgorithm {
 			
 			// prune (Ll)
 			for (Iterator<ColumnCombinationBitset> iterator = current_L.iterator(); iterator.hasNext();) {
-				ColumnCombinationBitset current = iterator.next();
-				if (current_C.get(current).isEmpty()) {
+				ColumnCombinationBitset X = iterator.next();
+				ColumnCombinationBitset C_x = C.get(X);
+				if (C_x.isEmpty()) {
 					iterator.remove();
 				}
+				// Key pruning not working, tmp is not always in C
+//				else if (this.isUnique(X)) {
+//					for (int A : C_x.minus(X).getSetBits()) {
+//						ColumnCombinationBitset intersection = R;
+//						for (int B : X.getSetBits()) {
+//							ColumnCombinationBitset tmp = new ColumnCombinationBitset(X).addColumn(A).removeColumn(B);
+//							intersection = intersection.intersect(C.get(tmp));
+//						}
+//						if (intersection.containsColumn(A)) {
+//							this.resultReceiver.receiveResult(createFD(X, A));
+//						}
+//					}
+//					iterator.remove();
+//				}
 			}
 			
 			if (current_L.isEmpty()) {
@@ -193,7 +203,7 @@ public class SuperFDAlgorithm {
 		long key_error = cur.getRawKeyError();
 		cur = strippPartition(cur.intersect(this.plis.get(dependant)));
 		if (isNew) {
-			this.next_plis.put(combination.addColumn(dependant), cur);
+			this.next_plis.put(new ColumnCombinationBitset(combination).addColumn(dependant), cur);
 		}
 		return key_error == cur.getRawKeyError();
 	}
