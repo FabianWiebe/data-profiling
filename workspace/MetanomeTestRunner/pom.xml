@@ -40,6 +40,12 @@
       <artifactId>SuperFD</artifactId>
       <version>${metanome.version}</version>
     </dependency>
+        
+    <dependency>
+      <groupId>de.metanome.algorithms.superid</groupId>
+      <artifactId>SuperID</artifactId>
+      <version>${metanome.version}</version>
+    </dependency>
     
     <dependency>
       <groupId>de.metanome</groupId>
