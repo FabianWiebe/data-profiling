@@ -5,21 +5,14 @@ import java.util.ArrayList;
 import de.metanome.algorithm_integration.AlgorithmConfigurationException;
 import de.metanome.algorithm_integration.AlgorithmExecutionException;
 import de.metanome.algorithm_integration.algorithm_types.BooleanParameterAlgorithm;
-import de.metanome.algorithm_integration.algorithm_types.FunctionalDependencyAlgorithm;
 import de.metanome.algorithm_integration.algorithm_types.InclusionDependencyAlgorithm;
 import de.metanome.algorithm_integration.algorithm_types.IntegerParameterAlgorithm;
-import de.metanome.algorithm_integration.algorithm_types.UniqueColumnCombinationsAlgorithm;
 import de.metanome.algorithm_integration.algorithm_types.RelationalInputParameterAlgorithm;
 import de.metanome.algorithm_integration.algorithm_types.StringParameterAlgorithm;
 import de.metanome.algorithm_integration.configuration.ConfigurationRequirement;
-import de.metanome.algorithm_integration.configuration.ConfigurationRequirementBoolean;
-import de.metanome.algorithm_integration.configuration.ConfigurationRequirementInteger;
 import de.metanome.algorithm_integration.configuration.ConfigurationRequirementRelationalInput;
-import de.metanome.algorithm_integration.configuration.ConfigurationRequirementString;
 import de.metanome.algorithm_integration.input.RelationalInputGenerator;
-import de.metanome.algorithm_integration.result_receiver.FunctionalDependencyResultReceiver;
 import de.metanome.algorithm_integration.result_receiver.InclusionDependencyResultReceiver;
-import de.metanome.algorithm_integration.result_receiver.UniqueColumnCombinationResultReceiver;
 
 public class SuperID extends SuperIDAlgorithm 				// Separating the algorithm implementation and the Metanome interface implementation is good practice
 						  implements InclusionDependencyAlgorithm, 			// Defines the type of the algorithm, i.e., the result type, for instance, FunctionalDependencyAlgorithm or InclusionDependencyAlgorithm; implementing multiple types is possible
