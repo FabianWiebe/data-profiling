@@ -21,19 +21,25 @@ import de.metanome.algorithms.superid.SuperID;
 import de.metanome.backend.input.file.DefaultFileInputGenerator;
 import de.metanome.backend.result_receiver.ResultCache;
 import de.uni_potsdam.hpi.metanome_test_runner.config.Config;
+import de.uni_potsdam.hpi.metanome_test_runner.config.SuperIDConfig;
 import de.uni_potsdam.hpi.metanome_test_runner.utils.FileUtils;
 
 public class MetanomeMock {
 
-	public static void execute(Config conf) {
+	public static void execute(SuperIDConfig conf) {
 		try {
-			RelationalInputGenerator inputGenerator = new DefaultFileInputGenerator(new ConfigurationSettingFileInput(
-					conf.inputFolderPath + conf.inputDatasetName + conf.inputFileEnding, true,
-					conf.inputFileSeparator, conf.inputFileQuotechar, conf.inputFileEscape, conf.inputFileStrictQuotes, 
-					conf.inputFileIgnoreLeadingWhiteSpace, conf.inputFileSkipLines, conf.inputFileHasHeader, 
-					conf.inputFileSkipDifferingLines, conf.inputFileNullString));
+			RelationalInputGenerator[] inputGenerators = new RelationalInputGenerator[conf.inputFileConfigs.size()];
+			for (int i = 0; i < conf.inputFileConfigs.size(); ++i) {
+				RelationalInputGenerator inputGenerator = new DefaultFileInputGenerator(new ConfigurationSettingFileInput(
+						conf.inputFileConfigs.get(i).folderPath + conf.inputFileConfigs.get(i).datasetName + conf.inputFileConfigs.get(i).fileEnding, true,
+						conf.inputFileConfigs.get(i).separator, conf.inputFileConfigs.get(i).quotechar, conf.inputFileConfigs.get(i).escape, conf.inputFileConfigs.get(i).strictQuotes, 
+						conf.inputFileConfigs.get(i).ignoreLeadingWhiteSpace, conf.inputFileConfigs.get(i).skipLines, conf.inputFileConfigs.get(i).hasHeader, 
+						conf.inputFileConfigs.get(i).skipDifferingLines, conf.inputFileConfigs.get(i).nullString));
+				inputGenerators[i] = inputGenerator;
+			}
+
 			
-			ResultCache resultReceiver = new ResultCache("MetanomeMock", getAcceptedColumns(inputGenerator));
+			ResultCache resultReceiver = new ResultCache("MetanomeMock", getAcceptedColumns(inputGenerators));
 			
 //			SuperUCC algorithm = new SuperUCC();
 //			algorithm.setRelationalInputConfigurationValue(SuperUCC.Identifier.INPUT_GENERATOR.name(), inputGenerator);
@@ -42,10 +48,7 @@ public class MetanomeMock {
 //			algorithm.setBooleanConfigurationValue(SuperUCC.Identifier.SOME_BOOLEAN_PARAMETER.name(), conf.someBooleanParameter);
 //			algorithm.setResultReceiver(resultReceiver);
 			SuperID algorithm = new SuperID();
-			algorithm.setRelationalInputConfigurationValue(SuperUCC.Identifier.INPUT_GENERATOR.name(), inputGenerator);
-			algorithm.setStringConfigurationValue(SuperUCC.Identifier.SOME_STRING_PARAMETER.name(), conf.someStringParameter);
-			algorithm.setIntegerConfigurationValue(SuperUCC.Identifier.SOME_INTEGER_PARAMETER.name(), conf.someIntegerParameter);
-			algorithm.setBooleanConfigurationValue(SuperUCC.Identifier.SOME_BOOLEAN_PARAMETER.name(), conf.someBooleanParameter);
+			algorithm.setRelationalInputConfigurationValue(SuperUCC.Identifier.INPUT_GENERATOR.name(), inputGenerators);
 			algorithm.setResultReceiver(resultReceiver);
 			
 			long runtime = System.currentTimeMillis();
@@ -62,18 +65,23 @@ public class MetanomeMock {
 		}
 	}
 
-	private static List<ColumnIdentifier> getAcceptedColumns(RelationalInputGenerator relationalInputGenerator) throws InputGenerationException, AlgorithmConfigurationException {
+	private static List<ColumnIdentifier> getAcceptedColumns(RelationalInputGenerator... relationalInputGenerators) throws InputGenerationException, AlgorithmConfigurationException {
 		List<ColumnIdentifier> acceptedColumns = new ArrayList<>();
-		RelationalInput relationalInput = relationalInputGenerator.generateNewCopy();
-		String tableName = relationalInput.relationName();
-		for (String columnName : relationalInput.columnNames())
-			acceptedColumns.add(new ColumnIdentifier(tableName, columnName));
+		
+		for(RelationalInputGenerator generator : relationalInputGenerators)
+		{
+			RelationalInput relationalInput = generator.generateNewCopy();
+			String tableName = relationalInput.relationName();
+			for (String columnName : relationalInput.columnNames())
+				acceptedColumns.add(new ColumnIdentifier(tableName, columnName));
+		}
+		
 		return acceptedColumns;
     }
 	
-	private static void writeResults(Config conf, ResultCache resultReceiver, Object algorithm, long runtime) throws IOException {
+	private static void writeResults(SuperIDConfig conf, ResultCache resultReceiver, Object algorithm, long runtime) throws IOException {
 		if (conf.writeResults) {
-			String outputPath = conf.measurementsFolderPath + conf.inputDatasetName + "_" + algorithm.getClass().getSimpleName() + File.separator;
+			String outputPath = conf.measurementsFolderPath + "_" + algorithm.getClass().getSimpleName() + File.separator;
 			List<Result> results = resultReceiver.fetchNewResults();
 			
 			FileUtils.writeToFile(

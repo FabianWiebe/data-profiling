@@ -1,6 +1,7 @@
 package de.uni_potsdam.hpi.metanome_test_runner.config;
 
 import java.io.File;
+import java.util.LinkedList;
 import java.util.List;
 
 public class SuperIDConfig {
@@ -9,8 +10,8 @@ public class SuperIDConfig {
 		PLANETS, SYMBOLS, SCIENCE, SATELLITES, GAME, ASTRONOMICAL, ABALONE, ADULT, BALANCE, BREAST, BRIDGES, CHESS, ECHODIAGRAM, FLIGHT, HEPATITIS, HORSE, IRIS, LETTER, NURSERY, PETS, NCVOTER_1K, NCVOTER_1K_OWN, UNIPROD_1K
 	}
 	
-	public List<Dataset> datasets;
-	public List<InputFileConfig> inputFileConfigs;
+	public List<Dataset> datasets = new LinkedList<Dataset>();
+	public List<InputFileConfig> inputFileConfigs = new LinkedList<InputFileConfig>();
 	
 	public String measurementsFolderPath = "io" + File.separator + "measurements" + File.separator;
 	
@@ -24,7 +25,7 @@ public class SuperIDConfig {
 	}
 	
 	public SuperIDConfig() {
-		this(SuperIDConfig.Dataset.NCVOTER_1K_OWN); //NCVOTER_1K
+		this(SuperIDConfig.Dataset.PLANETS, SuperIDConfig.Dataset.SATELLITES); //NCVOTER_1K
 	}
 
 	public SuperIDConfig(SuperIDConfig.Dataset... datasets) {
