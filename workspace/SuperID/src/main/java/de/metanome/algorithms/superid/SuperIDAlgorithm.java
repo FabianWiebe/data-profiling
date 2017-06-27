@@ -34,11 +34,9 @@ public class SuperIDAlgorithm {
 	
 	protected List<String> relationNames = new LinkedList<String>();
 	protected List<List<String>> columnNames = new LinkedList<List<String>>();
-	protected List<PositionListIndex> plis;
-	protected HashMap<ColumnCombinationBitset, PositionListIndex> current_plis;
-	protected HashMap<ColumnCombinationBitset, PositionListIndex> next_plis;
-	protected List<Boolean> is_one_value;
+	protected HashMap<String, ColumnCombinationBitset> inv_index;
 	protected List<InclusionDependency> results = new LinkedList<InclusionDependency>();
+	protected List<Integer> offsets = new ArrayList<Integer>();
 	
 	List<List<List<String>>> records;
 	
@@ -49,9 +47,28 @@ public class SuperIDAlgorithm {
 		records = this.readInput();
 //		this.print(records);
 		System.out.println("Starting Super ID with data sets: " + String.join(", ", this.relationNames));
+		int _offset = 0;
 		
-//		genPLIs();
-		this.next_plis = new HashMap<ColumnCombinationBitset, PositionListIndex>();
+		for(List<String> columns : columnNames) {
+			offsets.add(_offset);
+			_offset += columns.size();
+		}
+		ColumnCombinationBitset full_bitset = new ColumnCombinationBitset();
+		int last_table_index = this.offsets.size()-1;
+		full_bitset.setAllBits(this.offsets.get(last_table_index) + this.columnNames.get(last_table_index).size());
+		genInvertedIndex();
+		List<List<ColumnCombinationBitset>> rhs = new ArrayList<List<ColumnCombinationBitset>>();
+		
+		
+		ListIterator<Integer> offset_itr = this.offsets.listIterator();
+		for (Integer offset : this.offsets) {
+			List<ColumnCombinationBitset> bitsets = new ArrayList<ColumnCombinationBitset>();
+			for (int i = 0; i < offset_itr.next(); ++i) {
+				bitsets.add(new ColumnCombinationBitset(full_bitset));
+			}
+			rhs.add(bitsets);
+		}
+		
 		
 //		ColumnCombinationBitset emptySet = new ColumnCombinationBitset();
 //		List<ColumnCombinationBitset> current_L = new ArrayList<ColumnCombinationBitset>();
@@ -164,54 +181,25 @@ public class SuperIDAlgorithm {
 		}
 	}
 	
-	protected void genPLIs() {
-		this.plis = new ArrayList<PositionListIndex>(this.columnNames.size());
-		List<HashMap<String, LongArrayList>> m = new ArrayList<HashMap<String, LongArrayList>>(this.columnNames.size());
-		for (int i = 0; i < this.columnNames.size(); ++i) {
-			m.add(new HashMap<String, LongArrayList>());
-		}
-		// Todo: generate PLIs for all tables
-		ListIterator<List<String>> row_iter = records.get(0).listIterator();
-		while (row_iter.hasNext())
-		{
-			long row_id = (long) row_iter.nextIndex();
-			ListIterator<String> iter = row_iter.next().listIterator();
-			while (iter.hasNext()) {
-				HashMap<String, LongArrayList> cur_m = m.get(iter.nextIndex());
-				String val = iter.next();
-			    if (cur_m.containsKey(val)) {
-			    	cur_m.get(val).add(row_id);
-			    } else {
-			    	cur_m.put(val, new LongArrayList(Arrays.asList(row_id)));
-			    }
+	protected void genInvertedIndex() {
+		ListIterator<Integer> offset_itr = this.offsets.listIterator();
+		for (List<List<String>> table_data : records) {
+			int offset = offset_itr.next();
+			ListIterator<List<String>> row_iter = table_data.listIterator();
+			while (row_iter.hasNext())
+			{
+				ListIterator<String> iter = row_iter.next().listIterator();
+				while (iter.hasNext()) {
+					int column_id = (int) iter.nextIndex();
+					String val = iter.next();
+					if (this.inv_index.containsKey(val)) {
+						this.inv_index.get(val).addColumn(offset + column_id);
+					} else {
+						this.inv_index.put(val, new ColumnCombinationBitset(offset + column_id));
+					}
+				}
 			}
 		}
-		ListIterator<HashMap<String, LongArrayList>> col_iter = m.listIterator();
-		this.is_one_value = new ArrayList<Boolean>();
-		while (col_iter.hasNext())
-		{
-			List<LongArrayList> sets = new ArrayList<LongArrayList>(col_iter.next().values());
-			this.is_one_value.add(sets.size() == 1);
-			this.plis.add(strippPartition(new PositionListIndex(sets)));
-		}
-	}
-	
-	protected boolean isFD(ColumnCombinationBitset combination, int dependant) {
-		return this.isFD(combination, dependant, true);
-	}
-	
-	protected boolean isFD(ColumnCombinationBitset combination, int dependant, boolean isNew)
-	{
-		if (combination.isEmpty()) {
-			return this.is_one_value.get(dependant);
-		}
-		PositionListIndex cur = this.current_plis.get(combination);
-		long key_error = cur.getRawKeyError();
-		cur = strippPartition(cur.intersect(this.plis.get(dependant)));
-		if (isNew) {
-			this.next_plis.put(new ColumnCombinationBitset(combination).addColumn(dependant), cur);
-		}
-		return key_error == cur.getRawKeyError();
 	}
 	
 	protected PositionListIndex strippPartition(PositionListIndex pli) {
@@ -222,31 +210,6 @@ public class SuperIDAlgorithm {
 			}
 		}
 		return pli;
-	}
-	
-	protected boolean isUnique(ColumnCombinationBitset combination)
-	{
-		return this.current_plis.get(combination).isEmpty();
-//		return this.isUnique(combination.getSetBits());
-	}
-	
-	protected boolean isUnique(List<Integer> columnIds)
-	{
-		if (columnIds.size() == 0) {
-			return false;
-		}
-		Iterator<Integer> itr = columnIds.iterator();
-		PositionListIndex cur = this.plis.get(itr.next());
-		while(itr.hasNext()) {
-			cur = cur.intersect(this.plis.get(itr.next()));
-			Iterator<LongArrayList> iter = cur.getClusters().iterator();
-			while (iter.hasNext()) {
-				if (iter.next().size() <= 1) {
-					iter.remove();
-				}
-			}
-		}
-		return cur.size() == 0;
 	}
 	
 	protected List<List<List<String>>> readInput() throws InputGenerationException, AlgorithmConfigurationException, InputIterationException {
