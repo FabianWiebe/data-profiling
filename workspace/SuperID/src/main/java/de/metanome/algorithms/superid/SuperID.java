@@ -36,7 +36,9 @@ public class SuperID extends SuperIDAlgorithm 				// Separating the algorithm im
 	@Override
 	public ArrayList<ConfigurationRequirement<?>> getConfigurationRequirements() { // Tells Metanome which and how many parameters the algorithm needs
 		ArrayList<ConfigurationRequirement<?>> conf = new ArrayList<>();
-		conf.add(new ConfigurationRequirementRelationalInput(SuperID.Identifier.INPUT_GENERATOR.name()));
+		// An algorithm can ask for more than one input; this is typical for IND detection algorithms
+		conf.add(new ConfigurationRequirementRelationalInput(SuperID.Identifier.INPUT_GENERATOR.name(),
+		 ConfigurationRequirement.ARBITRARY_NUMBER_OF_VALUES));
 		
 		return conf;
 	}
@@ -109,7 +111,6 @@ public class SuperID extends SuperIDAlgorithm 				// Separating the algorithm im
 
 	@Override
 	public void setResultReceiver(InclusionDependencyResultReceiver resultReceiver) {
-		// TODO Auto-generated method stub
-		
+		this.resultReceiver = resultReceiver;
 	}
 }
