@@ -49,7 +49,7 @@ public class SuperIDAlgorithm {
 		int last_table_index = this.offsets.size()-1;
 		int total_columns = this.offsets.get(last_table_index) + this.columnNames.get(last_table_index).size();
 		full_bitset.setAllBits(total_columns);
-		genInvertedIndex();
+//		genInvertedIndex();
 		
 		System.out.println("Initializing RHS");
 		// initialize rhs
@@ -87,40 +87,20 @@ public class SuperIDAlgorithm {
 	}
 	
 	protected void initialize() throws InputGenerationException, AlgorithmConfigurationException, InputIterationException {
-		int total_size = 0;
 		this.records = new ArrayList<>(10);
+		int offset = 0;
 		for (RelationalInputGenerator generator : this.inputGenerator) {
 			RelationalInput input = generator.generateNewCopy();
 			System.out.println("Reading in " + input.relationName());
 			this.relationNames.add(input.relationName());
 			this.columnNames.add(input.columnNames());
-			List<List<String>> table_records = new ArrayList<>();
+//			List<List<String>> table_records = new ArrayList<>();
 			while (input.hasNext()) {
 				List<String> entries = input.next();
-				total_size += entries.size();
-				table_records.add(entries);
-			}
-			this.records.add(table_records);
-			try {
-				generator.close();
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		this.inv_index = new HashMap<String, ColumnCombinationBitset>(total_size/10);
-	}
-	
-	protected void genInvertedIndex() {
-		ListIterator<Integer> offset_itr = this.offsets.listIterator();
-		ListIterator<String> table_name_itr = this.relationNames.listIterator();
-		for (List<List<String>> table_data : this.records) {
-			System.out.println("Generating inverted index from " + table_name_itr.next());
-			int offset = offset_itr.next();
-			ListIterator<List<String>> row_iter = table_data.listIterator();
-			while (row_iter.hasNext())
-			{
-				ListIterator<String> iter = row_iter.next().listIterator();
+				if (this.inv_index == null) {
+					this.inv_index = new HashMap<String, ColumnCombinationBitset>(entries.size() * 10);
+				}
+				ListIterator<String> iter = entries.listIterator();
 				while (iter.hasNext()) {
 					int column_id = (int) iter.nextIndex();
 					String val = iter.next();
@@ -134,10 +114,44 @@ public class SuperIDAlgorithm {
 					}
 				}
 			}
-			table_data.clear();
+			offset += input.columnNames().size();
+//			this.records.add(table_records);
+			try {
+				generator.close();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
-		this.records.clear();
 	}
+	
+//	protected void genInvertedIndex() {
+//		ListIterator<Integer> offset_itr = this.offsets.listIterator();
+//		ListIterator<String> table_name_itr = this.relationNames.listIterator();
+//		for (List<List<String>> table_data : this.records) {
+//			System.out.println("Generating inverted index from " + table_name_itr.next());
+//			int offset = offset_itr.next();
+//			ListIterator<List<String>> row_iter = table_data.listIterator();
+//			while (row_iter.hasNext())
+//			{
+//				ListIterator<String> iter = row_iter.next().listIterator();
+//				while (iter.hasNext()) {
+//					int column_id = (int) iter.nextIndex();
+//					String val = iter.next();
+//					if (val == null) {
+//						continue;
+//					}
+//					if (this.inv_index.containsKey(val)) {
+//						this.inv_index.get(val).addColumn(offset + column_id);
+//					} else {
+//						this.inv_index.put(val, new ColumnCombinationBitset(offset + column_id));
+//					}
+//				}
+//			}
+//			table_data.clear();
+//		}
+//		this.records.clear();
+//	}
 	
 //	protected List<List<List<String>>> readInput() throws InputGenerationException, AlgorithmConfigurationException, InputIterationException {
 //		List<List<List<String>>> all_records = new ArrayList<>();
