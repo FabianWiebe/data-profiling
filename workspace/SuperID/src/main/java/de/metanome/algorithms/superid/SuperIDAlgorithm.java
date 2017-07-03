@@ -15,8 +15,6 @@ import de.metanome.algorithm_integration.input.InputGenerationException;
 import de.metanome.algorithm_integration.input.InputIterationException;
 import de.metanome.algorithm_integration.input.RelationalInput;
 import de.metanome.algorithm_integration.input.RelationalInputGenerator;
-import de.metanome.algorithm_integration.result_receiver.ColumnNameMismatchException;
-import de.metanome.algorithm_integration.result_receiver.CouldNotReceiveResultException;
 import de.metanome.algorithm_integration.result_receiver.InclusionDependencyResultReceiver;
 import de.metanome.algorithm_integration.results.InclusionDependency;
 
@@ -27,7 +25,7 @@ public class SuperIDAlgorithm {
 	
 	protected List<String> relationNames = new LinkedList<String>();
 	protected List<List<String>> columnNames = new LinkedList<List<String>>();
-	protected HashMap<String, ColumnCombinationBitset> inv_index = new HashMap<String, ColumnCombinationBitset>();
+	protected HashMap<String, ColumnCombinationBitset> inv_index;
 	protected List<Integer> offsets = new ArrayList<Integer>();
 	
 	List<List<List<String>>> records;
@@ -35,9 +33,11 @@ public class SuperIDAlgorithm {
 	
 	public void execute() throws AlgorithmExecutionException {
 
+		System.out.println("Starting Super IND");
+		
 		this.initialize();
-		records = this.readInput();
-		System.out.println("Starting Super ID with data sets: " + String.join(", ", this.relationNames));
+//		records = this.readInput();
+		
 		int _offset = 0;
 		
 		// calculate offsets for column combination bitset
@@ -51,12 +51,14 @@ public class SuperIDAlgorithm {
 		full_bitset.setAllBits(total_columns);
 		genInvertedIndex();
 		
+		System.out.println("Initializing RHS");
 		// initialize rhs
 		ColumnCombinationBitset rhs[] = new ColumnCombinationBitset[total_columns];
 		for (int i = 0; i < total_columns; ++i) {
 			rhs[i] = new ColumnCombinationBitset(full_bitset);
 		}
 		
+		System.out.println("Removing Candidates");
 		// remove candidates
 		for (ColumnCombinationBitset v : inv_index.values()) {
 			for (int A : v.getSetBits()) {
@@ -64,7 +66,8 @@ public class SuperIDAlgorithm {
 			}
 		}
 		
-		// Create possbile column Permutations
+		// Create possible column Permutations
+		System.out.println("Creating possible column Permutations");
 		ColumnPermutation identifiers[] = new ColumnPermutation[total_columns];
 		int itr = 0;
 		for(int i = 0; i< relationNames.size(); ++i) {
@@ -75,6 +78,7 @@ public class SuperIDAlgorithm {
 		}
 		
 		// Generate output
+		System.out.println("Generating output");
 		for (int A = 0; A < total_columns; ++A) {
 			for (Integer B : rhs[A].removeColumn(A).getSetBits()) {
 				this.resultReceiver.receiveResult(new InclusionDependency(identifiers[A], identifiers[B]));
@@ -82,17 +86,36 @@ public class SuperIDAlgorithm {
 		}
 	}
 	
-	protected void initialize() throws InputGenerationException, AlgorithmConfigurationException {
+	protected void initialize() throws InputGenerationException, AlgorithmConfigurationException, InputIterationException {
+		int total_size = 0;
+		this.records = new ArrayList<>(10);
 		for (RelationalInputGenerator generator : this.inputGenerator) {
 			RelationalInput input = generator.generateNewCopy();
+			System.out.println("Reading in " + input.relationName());
 			this.relationNames.add(input.relationName());
 			this.columnNames.add(input.columnNames());
+			List<List<String>> table_records = new ArrayList<>();
+			while (input.hasNext()) {
+				List<String> entries = input.next();
+				total_size += entries.size();
+				table_records.add(entries);
+			}
+			this.records.add(table_records);
+			try {
+				generator.close();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
+		this.inv_index = new HashMap<String, ColumnCombinationBitset>(total_size/10);
 	}
 	
 	protected void genInvertedIndex() {
 		ListIterator<Integer> offset_itr = this.offsets.listIterator();
-		for (List<List<String>> table_data : records) {
+		ListIterator<String> table_name_itr = this.relationNames.listIterator();
+		for (List<List<String>> table_data : this.records) {
+			System.out.println("Generating inverted index from " + table_name_itr.next());
 			int offset = offset_itr.next();
 			ListIterator<List<String>> row_iter = table_data.listIterator();
 			while (row_iter.hasNext())
@@ -111,20 +134,27 @@ public class SuperIDAlgorithm {
 					}
 				}
 			}
+			table_data.clear();
 		}
+		this.records.clear();
 	}
 	
-	protected List<List<List<String>>> readInput() throws InputGenerationException, AlgorithmConfigurationException, InputIterationException {
-		List<List<List<String>>> all_records = new ArrayList<>();
-		for (RelationalInputGenerator generator : this.inputGenerator) {
-			List<List<String>> records = new ArrayList<>();
-			RelationalInput input = generator.generateNewCopy();
-			while (input.hasNext())
-				records.add(input.next());
-			all_records.add(records);
-		}
-		return all_records;
-	}
+//	protected List<List<List<String>>> readInput() throws InputGenerationException, AlgorithmConfigurationException, InputIterationException {
+//		List<List<List<String>>> all_records = new ArrayList<>();
+//		int total_size = 0;
+//		for (RelationalInputGenerator generator : this.inputGenerator) {
+//			List<List<String>> records = new ArrayList<>();
+//			RelationalInput input = generator.generateNewCopy();
+//			while (input.hasNext()) {
+//				List<String> entries = input.next();
+//				total_size += entries.size();
+//				records.add(entries);
+//			}
+//			all_records.add(records);
+//		}
+//		this.inv_index = new HashMap<String, ColumnCombinationBitset>(total_size);
+//		return all_records;
+//	}
 	
 //	protected void emit(List<InclusionDependency> results) throws CouldNotReceiveResultException, ColumnNameMismatchException {
 //		for (InclusionDependency id : results) {
