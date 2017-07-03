@@ -28,7 +28,6 @@ public class SuperIDAlgorithm {
 	protected List<String> relationNames = new LinkedList<String>();
 	protected List<List<String>> columnNames = new LinkedList<List<String>>();
 	protected HashMap<String, ColumnCombinationBitset> inv_index = new HashMap<String, ColumnCombinationBitset>();
-	protected List<InclusionDependency> results = new LinkedList<InclusionDependency>();
 	protected List<Integer> offsets = new ArrayList<Integer>();
 	
 	List<List<List<String>>> records;
@@ -78,11 +77,9 @@ public class SuperIDAlgorithm {
 		// Generate output
 		for (int A = 0; A < total_columns; ++A) {
 			for (Integer B : rhs[A].removeColumn(A).getSetBits()) {
-				this.results.add(new InclusionDependency(identifiers[A], identifiers[B]));
+				this.resultReceiver.receiveResult(new InclusionDependency(identifiers[A], identifiers[B]));
 			}
 		}
-		
-		this.emit(this.results);
 	}
 	
 	protected void initialize() throws InputGenerationException, AlgorithmConfigurationException {
@@ -129,11 +126,11 @@ public class SuperIDAlgorithm {
 		return all_records;
 	}
 	
-	protected void emit(List<InclusionDependency> results) throws CouldNotReceiveResultException, ColumnNameMismatchException {
-		for (InclusionDependency id : results) {
-			this.resultReceiver.receiveResult(id);
-		}
-	}
+//	protected void emit(List<InclusionDependency> results) throws CouldNotReceiveResultException, ColumnNameMismatchException {
+//		for (InclusionDependency id : results) {
+//			this.resultReceiver.receiveResult(id);
+//		}
+//	}
 	
 	@Override
 	public String toString() {
